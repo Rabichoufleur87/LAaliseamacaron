@@ -4,84 +4,134 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>La Valise à Macarons — Macarons à composer à Limoges</title>
-<meta name="description" content="La Valise à Macarons, pâtisserie artisanale place de la Motte à Limoges (87) : macarons sucrés et salés à composer, coffrets et chocolats.">
+<meta name="description" content="La Valise à Macarons, pâtisserie artisanale place de la Motte à Limoges (87) : macarons sucrés et salés à composer, boîtes de 8 à 24, présentoirs et chocolats.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div id="progress"></div>
 <header class="top">
   <a class="logo" href="#accueil">La Valise <span>à Macarons</span></a>
-  <nav>
+  <button class="burger" id="burger" aria-label="Menu" aria-expanded="false">☰</button>
+  <nav id="nav">
+    <a href="#comment">Comment ça marche</a>
+    <a href="#boites">Nos boîtes</a>
     <a href="#macarons">Nos macarons</a>
-    <a href="#composer">Composer ma valise</a>
-    <a href="#histoire">Notre histoire</a>
-    <a href="#infos">Infos pratiques</a>
+    <a href="#composer">Composer</a>
+    <a href="#presentoirs">Présentoirs</a>
+    <a href="#faq">FAQ</a>
+    <a href="#contact" class="pill">Contact</a>
   </nav>
 </header>
 
 <main>
 <section id="accueil" class="hero">
-  <p class="kicker">Pâtisserie artisanale · Limoges</p>
-  <h1>Des macarons à composer,<br>comme on remplit sa valise.</h1>
-  <p>Sucrés ou salés, choisissez vos parfums un à un et repartez avec une valise pleine de gourmandise.</p>
-  <a class="btn" href="#composer">Composer ma valise</a>
+  <div class="hero-in reveal">
+    <p class="kicker">Pâtisserie artisanale · Limoges</p>
+    <h1>Des macarons à composer,<br>comme on remplit sa valise.</h1>
+    <p class="lead">Sucrés ou salés, choisissez vos parfums un à un. Boîtes de 8 à 24, sachets, présentoirs pour vos événements.</p>
+    <div class="actions">
+      <a class="btn" href="#composer">Composer ma boîte</a>
+      <a class="btn ghost" href="#macarons">Voir les parfums</a>
+    </div>
+    <ul class="badges">
+      <li>🥄 Fait main à l'atelier</li>
+      <li>🍬 Sucrés &amp; salés</li>
+      <li>📍 Place de la Motte</li>
+    </ul>
+  </div>
+  <a class="scroll-cue" href="#comment" aria-label="Découvrir la suite">Découvrir <span>↓</span></a>
 </section>
 
-<section id="macarons">
-  <h2>Nos macarons</h2>
-  <div class="cards">
-    <article class="card">
-      <h3>Macarons sucrés</h3>
-      <p class="price">1,20 € <small>pièce</small></p>
-      <p>Des classiques et des créations de saison : myrtille, mojito et bien d'autres parfums.</p>
-    </article>
-    <article class="card">
-      <h3>Macarons salés</h3>
-      <p class="price">1,30 € <small>pièce</small></p>
-      <p>Pour l'apéritif : chèvre, et d'autres saveurs surprenantes à partager.</p>
-    </article>
-    <article class="card">
-      <h3>Chocolats</h3>
-      <p class="price">Selon sélection</p>
-      <p>Une sélection de chocolats fabriqués à l'atelier.</p>
-    </article>
+<section id="comment">
+  <h2 class="reveal">Comment ça marche</h2>
+  <div class="steps">
+    <article class="card reveal"><span class="num">1</span><h3>Choisissez une boîte</h3><p>8, 12, 18 ou 24 macarons, ou un sachet de 1 à 6 pour une petite envie.</p></article>
+    <article class="card reveal"><span class="num">2</span><h3>Composez vos parfums</h3><p>Mélangez librement sucrés et salés : chaque macaron est à vous.</p></article>
+    <article class="card reveal"><span class="num">3</span><h3>Commandez &amp; retirez</h3><p>Passez commande puis retirez votre valise en boutique, au 15 place de la Motte.</p></article>
   </div>
 </section>
 
+<section id="boites" class="alt">
+  <h2 class="reveal">Nos boîtes</h2>
+  <p class="sub reveal">Prix indicatifs en macarons sucrés (1,20 € pièce). Les salés sont à 1,30 € pièce.</p>
+  <div class="cards sizes" id="sizes"></div>
+</section>
+
+<section id="macarons">
+  <h2 class="reveal">Nos macarons</h2>
+  <div class="tabs reveal" role="tablist">
+    <button class="tab on" data-f="all">Tous</button>
+    <button class="tab" data-f="sucré">Sucrés · 1,20 €</button>
+    <button class="tab" data-f="salé">Salés · 1,30 €</button>
+  </div>
+  <div class="flavors" id="flavors"></div>
+  <p class="sub reveal">La carte évolue avec les saisons : demandez les créations du moment en boutique.</p>
+</section>
+
 <section id="composer" class="alt">
-  <h2>Composer ma valise</h2>
-  <p>Choisissez vos macarons, le total se calcule tout seul. Passez votre commande en boutique ou par téléphone.</p>
-  <div id="builder" class="builder"></div>
-  <p class="total">Total : <strong id="total">0,00 €</strong> · <span id="count">0</span> macaron(s)</p>
-  <p class="note">Récapitulatif : <span id="summary">—</span></p>
-  <a class="btn" href="tel:+33984183323">Appeler pour commander</a>
+  <h2 class="reveal">Composer ma boîte</h2>
+  <div class="builder-wrap reveal">
+    <div class="size-pick" id="sizePick"></div>
+    <div class="meter"><div id="bar"></div></div>
+    <p class="meter-txt"><strong id="count">0</strong> / <span id="max">12</span> macarons · <span id="left"></span></p>
+    <div class="builder" id="builder"></div>
+    <div class="recap">
+      <p>Total : <strong id="total">0,00 €</strong></p>
+      <p class="note" id="summary">—</p>
+      <div class="actions">
+        <a class="btn" id="callBtn" href="tel:+33984183323">Commander par téléphone</a>
+        <button class="btn ghost" id="reset" type="button">Vider la boîte</button>
+      </div>
+    </div>
+  </div>
 </section>
 
-<section id="histoire">
-  <h2>Notre histoire</h2>
-  <p>Créée en 2013 à Limoges par Anne-Lise et Émile, La Valise à Macarons est née d'une envie simple : faire du macaron un plaisir sur mesure. Ici, tout est fabriqué à la main dans l'atelier, avec des parfums qui osent le sucré comme le salé.</p>
-</section>
-
-<section id="infos" class="alt">
-  <h2>Infos pratiques</h2>
+<section id="presentoirs">
+  <h2 class="reveal">Nos présentoirs</h2>
+  <p class="sub reveal">Mariage, anniversaire, cocktail d'entreprise : un présentoir de macarons fait son effet.</p>
   <div class="cards">
-    <article class="card">
-      <h3>Adresse</h3>
-      <p>15 place de la Motte<br>87000 Limoges</p>
-      <p><a href="https://www.openstreetmap.org/search?query=15%20place%20de%20la%20Motte%20Limoges">Voir sur la carte</a></p>
-    </article>
-    <article class="card">
-      <h3>Horaires</h3>
-      <p>Mardi – samedi : 10h – 19h<br>Dimanche et lundi : fermé</p>
-    </article>
-    <article class="card">
-      <h3>Contact</h3>
-      <p><a href="tel:+33984183323">09 84 18 33 23</a></p>
-    </article>
+    <article class="card reveal"><h3>Sur mesure</h3><p>Parfums, couleurs et quantités adaptés à votre événement.</p></article>
+    <article class="card reveal"><h3>Sucré &amp; salé</h3><p>Du dessert à l'apéritif, un seul artisan pour tout.</p></article>
+    <article class="card reveal"><h3>Sur devis</h3><p>Appelez-nous au <a href="tel:+33984183323">09 84 18 33 23</a> pour en parler.</p></article>
+  </div>
+</section>
+
+<section id="histoire" class="alt">
+  <h2 class="reveal">Notre histoire</h2>
+  <div class="story reveal">
+    <p>Créée en 2013 à Limoges par Anne-Lise et Émile, La Valise à Macarons est née d'une envie simple : faire du macaron un plaisir sur mesure.</p>
+    <p>Ici, tout est fabriqué à la main dans l'atelier, avec des parfums qui osent le sucré comme le salé. Et comme on ne part jamais en voyage sans sa valise&nbsp;: la vôtre se remplit à votre goût.</p>
+  </div>
+  <div class="stats">
+    <div class="reveal"><strong data-to="2013">0</strong><span>année de création</span></div>
+    <div class="reveal"><strong data-to="24">0</strong><span>macarons max par boîte</span></div>
+    <div class="reveal"><strong data-to="2">0</strong><span>univers : sucré &amp; salé</span></div>
+  </div>
+</section>
+
+<section id="faq">
+  <h2 class="reveal">Questions fréquentes</h2>
+  <div class="faq reveal">
+    <details><summary>Où acheter des macarons à Limoges ?</summary><p>La boutique vous accueille au 15 place de la Motte, à Limoges, pour vos commandes et retraits.</p></details>
+    <details><summary>Peut-on composer une boîte ?</summary><p>Oui : boîte de 8, 12, 18 ou 24 macarons, ou sachet de 1 à 6 macarons, avec les parfums de votre choix.</p></details>
+    <details><summary>Y a-t-il des macarons salés ?</summary><p>Oui, à 1,30 € pièce, parfaits pour l'apéritif. Les sucrés sont à 1,20 € pièce.</p></details>
+    <details><summary>Quels sont les horaires ?</summary><p>Du mardi au samedi de 10h à 19h. Fermé le dimanche et le lundi.</p></details>
+    <details><summary>Comment commander pour un événement ?</summary><p>Appelez le 09 84 18 33 23 pour obtenir un devis de présentoir.</p></details>
+  </div>
+</section>
+
+<section id="contact" class="alt">
+  <h2 class="reveal">Infos pratiques</h2>
+  <div class="cards">
+    <article class="card reveal"><h3>📍 Adresse</h3><p>15 place de la Motte<br>87000 Limoges</p><p><a href="https://www.openstreetmap.org/search?query=15%20place%20de%20la%20Motte%20Limoges" target="_blank" rel="noopener">Voir sur la carte</a></p></article>
+    <article class="card reveal"><h3>🕙 Horaires</h3><table class="hours" id="hours"></table><p id="openNow" class="open"></p></article>
+    <article class="card reveal"><h3>📞 Contact</h3><p><a href="tel:+33984183323">09 84 18 33 23</a></p><a class="btn" href="tel:+33984183323">Appeler</a></article>
   </div>
 </section>
 </main>
 
 <footer>© <span id="year"></span> La Valise à Macarons — 15 place de la Motte, 87000 Limoges</footer>
+<a href="#accueil" id="toTop" aria-label="Haut de page">↑</a>
 <script src="script.js"></script>
 </body>
 </html>
