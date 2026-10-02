@@ -1,4 +1,4 @@
-:root{--rose:#e8a0b4;--rose-d:#b84a6b;--cream:#fff8f3;--choc:#4a2c2a;--pistache:#c9dcb0}
+:root{--rose:#c9a8e8;--rose-d:#6a2c91;--cream:#f6f9ee;--choc:#2d1b45;--pistache:#a8d672}
 *{box-sizing:border-box}
 body{margin:0;font-family:Georgia,"Times New Roman",serif;background:var(--cream);color:var(--choc);line-height:1.6}
 a{color:var(--rose-d)}
@@ -23,7 +23,7 @@ h2{font-size:2rem;text-align:center}
 .price{font-size:1.5rem;color:var(--rose-d);margin:0}
 .builder{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin:24px auto}
 .item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--rose);border-radius:12px}
-.item small{display:block;color:#8a6a68}
+.item small{display:block;color:#6b5a80}
 .qty{display:flex;align-items:center;gap:6px}
 .qty button{width:30px;height:30px;border-radius:50%;border:0;background:var(--rose);color:var(--choc);font-size:1.1rem;cursor:pointer}
 .total{text-align:center;font-size:1.2rem}
