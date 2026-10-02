@@ -25,19 +25,25 @@
 
 <main>
 <section id="accueil" class="hero">
-  <div class="hero-in reveal">
-    <p class="kicker">Pâtisserie artisanale · Limoges</p>
-    <h1>Des macarons à composer,<br>comme on remplit sa valise.</h1>
-    <p class="lead">Sucrés ou salés, choisissez vos parfums un à un. Boîtes de 8 à 24, sachets, présentoirs pour vos événements.</p>
-    <div class="actions">
+  <div class="hero-text">
+    <p class="kicker reveal">Maison de macarons · Limoges depuis 2013</p>
+    <h1 class="reveal">L'art du macaron,<br><em>composé pour vous.</em></h1>
+    <p class="lead reveal">Des coques fines, des garnitures généreuses, sucrées ou salées. Composez votre valise de 8 à 24 macarons.</p>
+    <div class="actions reveal">
       <a class="btn" href="#composer">Composer ma boîte</a>
-      <a class="btn ghost" href="#macarons">Voir les parfums</a>
+      <a class="btn ghost" href="#macarons">Découvrir les parfums</a>
     </div>
-    <ul class="badges">
-      <li>🥄 Fait main à l'atelier</li>
-      <li>🍬 Sucrés &amp; salés</li>
-      <li>📍 Place de la Motte</li>
-    </ul>
+  </div>
+  <div class="hero-stage">
+    <div id="stage" aria-label="Macaron en 3D, faites-le tourner"><div class="fallback"></div></div>
+    <p class="hint">↔ Faites-le tourner</p>
+    <div class="swatches" role="group" aria-label="Couleur du macaron">
+      <button class="sw on" data-flavor="pistache" style="--c:#8db860" aria-label="Pistache"></button>
+      <button class="sw" data-flavor="violet" style="--c:#6a35a8" aria-label="Myrtille"></button>
+      <button class="sw" data-flavor="framboise" style="--c:#c93a64" aria-label="Framboise"></button>
+      <button class="sw" data-flavor="citron" style="--c:#e8d94c" aria-label="Citron"></button>
+      <button class="sw" data-flavor="chocolat" style="--c:#4a2c20" aria-label="Chocolat"></button>
+    </div>
   </div>
   <a class="scroll-cue" href="#comment" aria-label="Découvrir la suite">Découvrir <span>↓</span></a>
 </section>
@@ -132,6 +138,7 @@
 
 <footer>© <span id="year"></span> La Valise à Macarons — 15 place de la Motte, 87000 Limoges</footer>
 <a href="#accueil" id="toTop" aria-label="Haut de page">↑</a>
+<script src="macaron.min.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
