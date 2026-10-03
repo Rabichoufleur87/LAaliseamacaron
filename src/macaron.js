@@ -1,8 +1,7 @@
 import * as THREE from "three";
 
-const host = document.getElementById("stage");
 // face lisse, « pied » plus clair et rugueux, garniture
-const FLAVORS = {
+export const FLAVORS = {
   chocolat:  { face: 0x8a6446, foot: 0x9a7048, fill: 0x2a160f },
   pistache:  { face: 0x9cc46c, foot: 0xaccb80, fill: 0xf0e8cf },
   violet:    { face: 0x7a4cb8, foot: 0x8d62c6, fill: 0xe3d2f7 },
@@ -76,110 +75,122 @@ function fillGeometry() {
   return new THREE.LatheGeometry(pts, 120);
 }
 
-try {
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
-  host.appendChild(renderer.domElement);
 
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
-  camera.position.set(0, 0.35, 6.6);
-  camera.lookAt(0, 0, 0);
+export const ORDER = ["chocolat", "pistache", "violet", "framboise", "citron"];
 
-  // « studio » photo : grands softboxes pour de vrais reflets
-  const studio = new THREE.Scene();
-  studio.background = new THREE.Color(0x1d1133);
-  const box = (w, h, col, i, pos, look) => {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h),
-      new THREE.MeshBasicMaterial({ color: new THREE.Color(col).multiplyScalar(i), side: THREE.DoubleSide }));
-    m.position.set(...pos); m.lookAt(...look); studio.add(m);
-  };
-  box(8, 5, 0xfff0dd, 9, [-5, 5, 4], [0, 0, 0]);       // clé chaude en haut à gauche
-  box(3, 8, 0xc4e09a, 4, [6, 1, -3], [0, 0, 0]);       // liseré vert à droite
-  box(6, 3, 0xa77bdc, 3, [3, -3, 4], [0, 0, 0]);       // contre-jour violet
-  box(10, 2, 0xffffff, 2, [0, 6, -4], [0, 0, 0]);
-  const pm = new THREE.PMREMGenerator(renderer);
-  scene.environment = pm.fromScene(studio, 0.03).texture;
-  const key = new THREE.DirectionalLight(0xfff1de, 1.6); key.position.set(-3, 4, 5); scene.add(key);
+export function createMacaron(host) {
+  const state = { x: 0, y: 0, scale: 1, rotY: -0.85, rotX: 0.08, explode: 0, flavor: 0, active: true };
+  const api = { state, dragHint: () => {}, onFrame: null };
+  try {
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    host.appendChild(renderer.domElement);
 
-  const faceMat = new THREE.MeshPhysicalMaterial({
-    color: FLAVORS.chocolat.face, roughness: 0.5, clearcoat: 0.1, clearcoatRoughness: 0.6,
-    sheen: 0.15, sheenRoughness: 0.7, sheenColor: new THREE.Color(0xd9b48a),
-    bumpMap: grain(512, 5000, 0.6, 1.8, 90, 40), bumpScale: 0.7, envMapIntensity: 0.45,
-  });
-  faceMat.bumpMap.repeat.set(2, 2);
-  const footMat = new THREE.MeshPhysicalMaterial({
-    color: FLAVORS.chocolat.foot, roughness: 0.92,
-    bumpMap: grain(512, 3200, 1, 5, 200, 160), bumpScale: 2.2, envMapIntensity: 0.3,
-  });
-  footMat.bumpMap.repeat.set(5, 1.2);
-  const fillMat = new THREE.MeshPhysicalMaterial({
-    color: FLAVORS.chocolat.fill, roughness: 0.28, clearcoat: 0.8, clearcoatRoughness: 0.2, envMapIntensity: 1.2,
-  });
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
+    camera.position.set(0, 0.35, 6.6);
+    camera.lookAt(0, 0, 0);
 
-  const shellGeo = [domeGeometry(), footGeometry()];
-  const makeShell = () => {
-    const g = new THREE.Group();
-    g.add(new THREE.Mesh(shellGeo[0], faceMat), new THREE.Mesh(shellGeo[1], footMat));
-    return g;
-  };
-  const top = makeShell(), bottom = makeShell();
-  bottom.rotation.x = Math.PI;
-  const fill = new THREE.Mesh(fillGeometry(), fillMat);
-  const macaron = new THREE.Group();
-  macaron.add(top, bottom, fill);
-  macaron.rotation.z = -Math.PI / 2;           // le macaron est debout sur la tranche
-  macaron.scale.setScalar(1.18);
-  const spin = new THREE.Group(); spin.add(macaron); scene.add(spin);
+    const studio = new THREE.Scene();
+    studio.background = new THREE.Color(0x1d1133);
+    const box = (w, h, col, i, pos) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h),
+        new THREE.MeshBasicMaterial({ color: new THREE.Color(col).multiplyScalar(i), side: THREE.DoubleSide }));
+      m.position.set(...pos); m.lookAt(0, 0, 0); studio.add(m);
+    };
+    box(8, 5, 0xfff0dd, 9, [-5, 5, 4]);
+    box(3, 8, 0xc4e09a, 4, [6, 1, -3]);
+    box(6, 3, 0xa77bdc, 3, [3, -3, 4]);
+    box(10, 2, 0xffffff, 2, [0, 6, -4]);
+    const pm = new THREE.PMREMGenerator(renderer);
+    scene.environment = pm.fromScene(studio, 0.03).texture;
+    const key = new THREE.DirectionalLight(0xfff1de, 1.6); key.position.set(-3, 4, 5); scene.add(key);
 
-  function resize() {
-    const w = host.clientWidth, h = host.clientHeight;
-    renderer.setSize(w, h, false);
-    camera.aspect = w / h;
-    camera.position.z = w / h < 0.9 ? 8.6 : 6.6;
-    camera.updateProjectionMatrix();
+    const f0 = FLAVORS.chocolat;
+    const faceMat = new THREE.MeshPhysicalMaterial({
+      color: f0.face, roughness: 0.5, clearcoat: 0.1, clearcoatRoughness: 0.6,
+      sheen: 0.15, sheenRoughness: 0.7, sheenColor: new THREE.Color(0xd9b48a),
+      bumpMap: grain(512, 5000, 0.6, 1.8, 90, 40), bumpScale: 0.7, envMapIntensity: 0.45,
+    });
+    faceMat.bumpMap.repeat.set(2, 2);
+    const footMat = new THREE.MeshPhysicalMaterial({
+      color: f0.foot, roughness: 0.92,
+      bumpMap: grain(512, 3200, 1, 5, 200, 160), bumpScale: 2.2, envMapIntensity: 0.3,
+    });
+    footMat.bumpMap.repeat.set(5, 1.2);
+    const fillMat = new THREE.MeshPhysicalMaterial({
+      color: f0.fill, roughness: 0.28, clearcoat: 0.8, clearcoatRoughness: 0.2, envMapIntensity: 1.2,
+    });
+
+    const shellGeo = [domeGeometry(), footGeometry()];
+    const makeShell = () => {
+      const g = new THREE.Group();
+      g.add(new THREE.Mesh(shellGeo[0], faceMat), new THREE.Mesh(shellGeo[1], footMat));
+      return g;
+    };
+    const top = makeShell(), bottom = makeShell();
+    bottom.rotation.x = Math.PI;
+    const fill = new THREE.Mesh(fillGeometry(), fillMat);
+    const macaron = new THREE.Group();
+    macaron.add(top, bottom, fill);
+    macaron.rotation.z = -Math.PI / 2;
+    const spin = new THREE.Group(); spin.add(macaron); scene.add(spin);
+
+    function resize() {
+      const w = host.clientWidth, h = host.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.position.z = w / h < 0.9 ? 9.4 : 6.6;
+      camera.updateProjectionMatrix();
+    }
+    new ResizeObserver(resize).observe(host); resize();
+
+    // glisser pour tourner, puis retour élastique vers la pose du scroll
+    let dY = 0, dX = 0, vY = 0, vX = 0, drag = false, lx = 0, ly = 0;
+    const el = renderer.domElement;
+    el.addEventListener("pointerdown", e => { drag = true; lx = e.clientX; ly = e.clientY; el.setPointerCapture(e.pointerId); host.classList.add("grab"); });
+    el.addEventListener("pointermove", e => {
+      if (!drag) return;
+      vY = (e.clientX - lx) * 0.012; vX = (e.clientY - ly) * 0.006;
+      dY += vY; dX = THREE.MathUtils.clamp(dX + vX, -0.8, 0.8);
+      lx = e.clientX; ly = e.clientY;
+      document.documentElement.classList.add("touched");
+    });
+    const up = () => { drag = false; host.classList.remove("grab"); dY = ((dY + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI; };
+    el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+
+    const ca = new THREE.Color(), cb = new THREE.Color();
+    const mix = (target, key, i, j, t) => target.copy(ca.setHex(FLAVORS[ORDER[i]][key])).lerp(cb.setHex(FLAVORS[ORDER[j]][key]), t);
+    let lastF = -1;
+    function applyFlavor(f) {
+      if (Math.abs(f - lastF) < 0.001) return;
+      lastF = f;
+      const i = Math.min(ORDER.length - 1, Math.floor(f)), j = Math.min(ORDER.length - 1, i + 1);
+      const t = THREE.MathUtils.smoothstep(f - i, 0.25, 0.75);
+      mix(faceMat.color, "face", i, j, t); mix(footMat.color, "foot", i, j, t); mix(fillMat.color, "fill", i, j, t);
+      api.glow = "#" + faceMat.color.getHexString();
+    }
+
+    const clock = new THREE.Clock();
+    renderer.setAnimationLoop(() => {
+      if (api.onFrame) api.onFrame();
+      if (!state.active) return;
+      const t = clock.getElapsedTime();
+      if (!drag) { vY *= 0.94; vX *= 0.92; dY += vY; dX += vX; dY += (0 - dY) * 0.025; dX += (0 - dX) * 0.04; }
+      applyFlavor(state.flavor);
+      spin.position.set(state.x, state.y + Math.sin(t * 1.1) * 0.05, 0);
+      spin.rotation.y = state.rotY + dY + Math.sin(t * 0.5) * 0.08;
+      spin.rotation.x = state.rotX + dX;
+      macaron.scale.setScalar(1.18 * state.scale);
+      top.position.y = 0.1 + state.explode; bottom.position.y = -0.1 - state.explode;
+      renderer.render(scene, camera);
+    });
+    host.classList.add("ready");
+  } catch (e) {
+    host.classList.add("no3d");
   }
-  new ResizeObserver(resize).observe(host); resize();
-
-  // rotation à la souris / au doigt, avec inertie
-  let rotY = -0.85, rotX = 0.08, vY = 0.003, vX = 0, drag = false, lx = 0, ly = 0;
-  const el = renderer.domElement;
-  el.addEventListener("pointerdown", e => { drag = true; lx = e.clientX; ly = e.clientY; el.setPointerCapture(e.pointerId); host.classList.add("grab"); });
-  el.addEventListener("pointermove", e => {
-    if (!drag) return;
-    vY = (e.clientX - lx) * 0.012; vX = (e.clientY - ly) * 0.006;
-    rotY += vY; rotX = THREE.MathUtils.clamp(rotX + vX, -0.7, 0.9);
-    lx = e.clientX; ly = e.clientY;
-    host.classList.add("touched");
-  });
-  const up = () => { drag = false; host.classList.remove("grab"); };
-  el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
-
-  document.querySelectorAll("[data-flavor]").forEach(b => b.addEventListener("click", () => {
-    const c = FLAVORS[b.dataset.flavor];
-    faceMat.color.setHex(c.face); footMat.color.setHex(c.foot); fillMat.color.setHex(c.fill);
-    document.querySelectorAll("[data-flavor]").forEach(o => o.classList.toggle("on", o === b));
-  }));
-
-  const clock = new THREE.Clock();
-  let visible = true;
-  new IntersectionObserver(e => { visible = e[0].isIntersecting; }, { threshold: 0 }).observe(host);
-  renderer.setAnimationLoop(() => {
-    if (!visible) return;
-    const t = clock.getElapsedTime();
-    if (!drag) { vY += (0.003 - vY) * 0.02; vX *= 0.92; rotY += vY; rotX = THREE.MathUtils.clamp(rotX + vX, -0.7, 0.9); rotX += (0.08 - rotX) * 0.01; }
-    spin.rotation.y = rotY; spin.rotation.x = rotX;
-    spin.position.y = Math.sin(t * 1.1) * 0.05;
-    const k = THREE.MathUtils.clamp(scrollY / (innerHeight * 0.8), 0, 1);
-    top.position.y = 0.1 + k * 0.55; bottom.position.y = -0.1 - k * 0.55;
-    spin.scale.setScalar(1 - k * 0.12);
-    host.style.setProperty("--shadow", 1 - k * 0.6);
-    renderer.render(scene, camera);
-  });
-  host.classList.add("ready");
-} catch (e) {
-  host.classList.add("no3d");
+  return api;
 }
