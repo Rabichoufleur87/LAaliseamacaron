@@ -48,7 +48,7 @@ body.in-flavors .bgwords{opacity:1}
 .story a,.story button{pointer-events:auto}
 .panel{min-height:100vh;display:flex;align-items:center;padding:0 8vw;position:relative}
 #coque,#garniture{min-height:130vh}
-.panel .txt{max-width:480px}
+.panel .txt{max-width:430px}
 .panel.right{justify-content:flex-end}
 .hero{padding-top:70px}
 .hero .txt{max-width:600px}
@@ -164,3 +164,14 @@ footer{text-align:center;padding:40px 20px 36px;border-top:1px solid var(--line)
   .bgw{font-size:20vw}
 }
 @media (prefers-reduced-motion:reduce){.scrollhint i{animation:none}}
+
+.bokeh{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.bokeh i{position:absolute;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--glow) 80%,#fff 10%),transparent 70%);animation:floaty linear infinite alternate;transition:background .6s}
+@keyframes floaty{from{transform:translate(0,0)}to{transform:translate(40px,-60px)}}
+.callouts{position:fixed;inset:0;z-index:4;pointer-events:none}
+.co{position:absolute;left:0;top:0;width:200px;text-align:center;will-change:transform}
+.co span{color:var(--muted);font-size:.85rem;line-height:1.4}
+.co span b{display:block;color:var(--ivory);font:400 1.15rem var(--serif)}
+.colines{position:absolute;inset:0;width:100%;height:100%}
+.colines line{stroke:var(--green);stroke-width:1;stroke-dasharray:3 4}
+@media (max-width:860px){.callouts{display:none}}

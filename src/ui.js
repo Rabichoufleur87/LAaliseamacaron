@@ -5,7 +5,8 @@ const SWEET = 1.2, SAVORY = 1.3;
 const FLAVORS = [
   { name: "Chocolat", type: "sucré", color: "#5a3a2a" },
   { name: "Pistache", type: "sucré", color: "#b5d27a" },
-  { name: "Myrtille", type: "sucré", color: "#6b4a9e" },
+  { name: "Café", type: "sucré", color: "#b59f86" },
+  { name: "Cassis", type: "sucré", color: "#70505f" },
   { name: "Mojito", type: "sucré", color: "#9ed36a" },
   { name: "Framboise", type: "sucré", color: "#d9456b" },
   { name: "Citron", type: "sucré", color: "#f2e05a" },

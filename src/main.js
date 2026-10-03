@@ -60,7 +60,7 @@ $$('a[href^="#"]').forEach(a => a.addEventListener("click", e => {
 const mm = gsap.matchMedia();
 mm.add({ desk: "(min-width: 861px)", mob: "(max-width: 860px)" }, ctx => {
   const desk = ctx.conditions.desk;
-  const X = desk ? { hero: 1.4, coque: -1.35, gar: 1.1 } : { hero: 0, coque: 0, gar: 0 };
+  const X = desk ? { hero: 1.4, coque: -1.35, gar: 0.7 } : { hero: 0, coque: 0, gar: 0 };
   const Y = desk ? { hero: 0, chap: 0 } : { hero: 1.25, chap: 1.15 };
   const sc = desk ? 0.9 : 0.68;
   Object.assign(S, { x: X.hero, y: Y.hero, scale: sc, rotY: -0.85, rotX: 0.08, explode: 0, flavor: 0 });
@@ -71,21 +71,35 @@ mm.add({ desk: "(min-width: 861px)", mob: "(max-width: 860px)" }, ctx => {
   });
   // 0–100 accueil · 100–230 coque · 230–360 garniture · 360–610 parfums (épinglé)
   tl.to(S, { x: X.coque, y: Y.chap, scale: sc * 1.12, rotY: -Math.PI / 2 - 0.15, rotX: 0, duration: 80 }, 20)
-    .to(S, { x: X.gar, y: Y.chap, scale: sc * 1.0, rotY: -0.45, rotX: 0.15, duration: 60 }, 150)
-    .to(S, { explode: 0.5, duration: 45, ease: "power3.out" }, 215)
+    .to(S, { x: X.gar, y: Y.chap, scale: sc * 0.92, rotY: -0.45, rotX: 0.15, duration: 60 }, 150)
+    .to(S, { explode: 0.55, duration: 45, ease: "power3.out" }, 215)
     .to(S, { explode: 0, duration: 40 }, 290)
     .to(S, { x: 0, y: desk ? 0.4 : 0.5, scale: sc * 1.0, rotY: -0.85, rotX: 0.08, duration: 55 }, 305)
-    .to(S, { flavor: 4, duration: 240, ease: "none" }, 360)
+    .to(S, { flavor: 5, duration: 240, ease: "none" }, 360)
     .to(S, { rotY: -0.85 + Math.PI * 2, duration: 240, ease: "none" }, 360);
   return () => {};
 });
 
 // couleur ambiante + mots géants + légendes suivant le parfum
+const cos = $$(".co"), lines = $$(".colines line");
 const bgw = $$(".bgw"), fi = $$(".fi"), dots = $$("#fdots i");
 let cur = -1;
 mac.onFrame = () => {
   if (mac.glow) root.style.setProperty("--glow", mac.glow);
-  const idx = Math.min(4, Math.round(S.flavor));
+  // légendes de la vue éclatée, ancrées sur les pièces 3D
+  const pts = mac.pts, k = Math.min(1, Math.max(0, (S.explode - 0.25) / 0.35));
+  $("#callouts").style.opacity = pts && k > 0 ? k : 0;
+  if (pts && k > 0) {
+    const order = pts.map((p, i) => i).sort((a, b) => pts[a].x - pts[b].x);
+    const cx = pts.reduce((s, p) => s + p.x, 0) / 3, ly = innerHeight - 150;
+    order.forEach((i, slot) => {
+      const x = cx + (slot - 1) * 230, p = pts[i];
+      cos[i].style.transform = `translate(${x - 100}px,${ly}px)`;
+      const ln = lines[i];
+      ln.setAttribute("x1", p.x); ln.setAttribute("y1", p.y); ln.setAttribute("x2", x); ln.setAttribute("y2", ly - 8);
+    });
+  }
+  const idx = Math.min(5, Math.round(S.flavor));
   if (idx !== cur) {
     cur = idx;
     [bgw, fi, dots].forEach(list => list.forEach((el, i) => el.classList.toggle("on", i === idx)));
@@ -157,6 +171,14 @@ if (fine && !reduce) {
     });
     c.addEventListener("pointerleave", () => gsap.to(c, { rotateX: 0, rotateY: 0, duration: 0.6 }));
   });
+}
+
+// bokeh d'ambiance (flou de profondeur façon photo culinaire)
+const bk = $("#bokeh");
+for (let i = 0; i < 16; i++) {
+  const d = document.createElement("i"), s = 40 + Math.random() * 150;
+  d.style.cssText = `width:${s}px;height:${s}px;left:${Math.random() * 100}%;top:${Math.random() * 100}%;opacity:${0.08 + Math.random() * 0.22};animation-duration:${14 + Math.random() * 18}s;animation-delay:${-Math.random() * 20}s;filter:blur(${6 + Math.random() * 14}px)`;
+  bk.append(d);
 }
 
 // --- intro ---
