@@ -9,6 +9,11 @@ const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
+const clamp01 = v => Math.min(1, Math.max(0, v));
+
+// un récit au scroll se relit depuis le début
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+scrollTo(0, 0);
 
 initUI();
 
@@ -60,45 +65,86 @@ $$('a[href^="#"]').forEach(a => a.addEventListener("click", e => {
 const mm = gsap.matchMedia();
 mm.add({ desk: "(min-width: 861px)", mob: "(max-width: 860px)" }, ctx => {
   const desk = ctx.conditions.desk;
-  const X = desk ? { hero: 1.4, coque: -1.35, gar: 0.7 } : { hero: 0, coque: 0, gar: 0 };
-  const Y = desk ? { hero: 0, chap: 0 } : { hero: 1.25, chap: 1.15 };
   const sc = desk ? 0.9 : 0.68;
-  Object.assign(S, { x: X.hero, y: Y.hero, scale: sc, rotY: -0.85, rotX: 0.08, explode: 0, flavor: 0 });
+  const pose = (x, y, rotY, rotX, scale, rotZ = 0) => ({ x, y, rotY, rotX, scale, rotZ });
+  // poses du macaron à chaque chapitre (sur mobile, la vue éclatée est verticale)
+  const P = desk ? {
+    hero: pose(1.4, 0, -0.85, 0.08, sc),
+    coque: pose(-1.35, 0, -Math.PI / 2 - 0.15, 0, sc * 1.12),
+    intro: pose(1.3, 0, 0.5, 0.1, sc * 0.95),
+    xview: pose(0.05, -0.2, 0.42, 0.06, sc * 0.78),
+    orbit: { rotY: 0.55, rotX: 0.12 },
+    flav: pose(0, 0.3, -0.85, 0.08, sc),
+  } : {
+    hero: pose(0, 0.95, -0.85, 0.08, sc),
+    coque: pose(0, 1.15, -Math.PI / 2 - 0.15, 0, sc * 1.12),
+    intro: pose(0, 1.1, 0.5, 0.1, sc * 0.95),
+    xview: pose(-0.3, 0.1, 0, 0.42, sc * 0.82, Math.PI / 2),
+    orbit: { rotX: 0.55 },
+    flav: pose(0, 0.5, -0.85, 0.08, sc),
+  };
+  Object.assign(S, P.hero, { split: 0, layer: 0, flavor: 0 });
 
   const tl = gsap.timeline({
     defaults: { ease: "power2.inOut" },
     scrollTrigger: { trigger: "#story", start: "top top", end: "bottom bottom", scrub: 0.8 },
   });
-  // 0–100 accueil · 100–230 coque · 230–360 garniture · 360–610 parfums (épinglé)
-  tl.to(S, { x: X.coque, y: Y.chap, scale: sc * 1.12, rotY: -Math.PI / 2 - 0.15, rotX: 0, duration: 80 }, 20)
-    .to(S, { x: X.gar, y: Y.chap, scale: sc * 0.92, rotY: -0.45, rotX: 0.15, duration: 60 }, 150)
-    .to(S, { explode: 0.55, duration: 45, ease: "power3.out" }, 215)
-    .to(S, { explode: 0, duration: 40 }, 290)
-    .to(S, { x: 0, y: desk ? 0.4 : 0.5, scale: sc * 1.0, rotY: -0.85, rotX: 0.08, duration: 55 }, 305)
-    .to(S, { flavor: 5, duration: 240, ease: "none" }, 360)
-    .to(S, { rotY: -0.85 + Math.PI * 2, duration: 240, ease: "none" }, 360);
+  // en vh défilés : 0–100 accueil · 100–230 coque · 230–630 vue éclatée (épinglée 230–530) · 630–980 parfums (épinglé 630–880)
+  tl.to(S, { ...P.coque, duration: 70 }, 20)
+    .to(S, { ...P.intro, duration: 80 }, 150)
+    .to(".xtxt", { opacity: 0, y: -40, duration: 28, ease: "power1.in" }, 262)
+    .to(S, { ...P.xview, duration: 55 }, 262)
+    .to(S, { split: 1, duration: 50 }, 305)
+    .to(S, { layer: 1, duration: 55, ease: "power3.out" }, 338)
+    .to(S, { ...P.orbit, duration: 90, ease: "sine.inOut" }, 392)
+    .to(S, { layer: 0, duration: 40 }, 482)
+    .to(S, { split: 0, duration: 40 }, 498)
+    .to(S, { ...P.flav, duration: 90 }, 530)
+    .to(S, { flavor: 5, duration: 230, ease: "none" }, 640)
+    .to(S, { rotY: P.flav.rotY + Math.PI * 2, duration: 230, ease: "none" }, 640)
+    .to({}, { duration: 10 }, 870);
   return () => {};
 });
 
+// --- légendes de la vue éclatée, accrochées aux pièces 3D (au-dessus sur ordinateur, à droite sur mobile) ---
+const callouts = $("#callouts"), cos = $$(".co"), clines = $$(".colines line"), cdots = $$(".colines circle"), xhint = $(".xhint");
+const RANK = [2, 1, 0, 1, 2]; // la ganache d'abord, puis les intérieurs, puis les coques
+const setLine = (l, x1, y1, x2, y2) => { l.setAttribute("x1", x1); l.setAttribute("y1", y1); l.setAttribute("x2", x2); l.setAttribute("y2", y2); };
+function updateCallouts() {
+  const L = S.layer, pts = mac.pts;
+  xhint.style.opacity = clamp01((L - 0.6) / 0.3);
+  if (!pts || L < 0.45) { callouts.style.visibility = "hidden"; return; }
+  callouts.style.visibility = "visible";
+  const side = innerWidth <= 860, P = side ? pts.side : pts.up;
+  const order = [0, 1, 2, 3, 4];
+  if (side ? P[0].y > P[4].y : P[0].x > P[4].x) order.reverse();
+  const top = Math.max(118, Math.min(...P.map(p => p.y)) - 95);
+  const colX = Math.min(innerWidth - 128, Math.max(innerWidth * 0.6, Math.max(...P.map(p => p.x)) + 40));
+  let crowd = false;
+  for (let n = 1; n < 5; n++) if (Math.abs(P[order[n]].x - P[order[n - 1]].x) < 110) crowd = true;
+  order.forEach((pi, n) => {
+    const p = P[pi], a = clamp01((L - 0.5 - RANK[n] * 0.12) / 0.18), el = cos[n];
+    el.style.opacity = a;
+    if (!side) {
+      const ly = top - (crowd && n % 2 ? 52 : 0);
+      el.style.transform = `translate(${p.x}px,${ly}px) translate(-50%,-100%) translateY(${(1 - a) * 12}px)`;
+      setLine(clines[n], p.x, ly + 8, p.x, ly + 8 + (p.y - ly - 13) * a);
+    } else {
+      el.style.transform = `translate(${colX}px,${p.y}px) translate(0,-50%) translateX(${(1 - a) * 10}px)`;
+      setLine(clines[n], colX - 8, p.y, colX - 8 - (colX - 13 - p.x) * a, p.y);
+    }
+    cdots[n].setAttribute("cx", p.x);
+    cdots[n].setAttribute("cy", p.y);
+    cdots[n].style.opacity = a > 0.95 ? 1 : 0;
+  });
+}
+
 // couleur ambiante + mots géants + légendes suivant le parfum
-const cos = $$(".co"), lines = $$(".colines line");
 const bgw = $$(".bgw"), fi = $$(".fi"), dots = $$("#fdots i");
 let cur = -1;
 mac.onFrame = () => {
   if (mac.glow) root.style.setProperty("--glow", mac.glow);
-  // légendes de la vue éclatée, ancrées sur les pièces 3D
-  const pts = mac.pts, k = Math.min(1, Math.max(0, (S.explode - 0.25) / 0.35));
-  $("#callouts").style.opacity = pts && k > 0 ? k : 0;
-  if (pts && k > 0) {
-    const order = pts.map((p, i) => i).sort((a, b) => pts[a].x - pts[b].x);
-    const cx = pts.reduce((s, p) => s + p.x, 0) / 3, ly = innerHeight - 150;
-    order.forEach((i, slot) => {
-      const x = cx + (slot - 1) * 230, p = pts[i];
-      cos[i].style.transform = `translate(${x - 100}px,${ly}px)`;
-      const ln = lines[i];
-      ln.setAttribute("x1", p.x); ln.setAttribute("y1", p.y); ln.setAttribute("x2", x); ln.setAttribute("y2", ly - 8);
-    });
-  }
+  updateCallouts();
   const idx = Math.min(5, Math.round(S.flavor));
   if (idx !== cur) {
     cur = idx;
@@ -121,7 +167,7 @@ $$("[data-split]").forEach(el => {
     onLeaveBack: () => gsap.set(words, { yPercent: 115, rotate: 4 }),
   });
 });
-$$(".panel:not(.hero) [data-fade]").forEach(el => ScrollTrigger.create({
+$$("[data-fade]").filter(el => !el.closest(".hero")).forEach(el => ScrollTrigger.create({
   trigger: el, start: "top 85%",
   onEnter: () => gsap.to(el, { opacity: 1, y: 0, duration: 1, ease: "power3.out", delay: 0.25 }),
   onLeaveBack: () => gsap.set(el, { opacity: 0, y: 30 }),
@@ -184,12 +230,15 @@ for (let i = 0; i < 16; i++) {
 // --- intro ---
 const pct = $("#pct");
 const intro = gsap.timeline({ paused: true });
-intro.to("#loader", { yPercent: -100, duration: 1.1, ease: "power4.inOut" })
-  .add(() => $("#loader").remove(), ">")
-  .to(splitted.get($(".hero .kicker")), { yPercent: 0, rotate: 0, duration: 1, ease: "power4.out", stagger: 0.04 }, "-=0.5")
-  .to(splitted.get($(".hero h1")), { yPercent: 0, rotate: 0, duration: 1.3, ease: "power4.out", stagger: 0.09 }, "-=0.8")
-  .to(".hero [data-fade]", { opacity: 1, y: 0, duration: 1, stagger: 0.15, ease: "power3.out" }, "-=0.9")
-  .to([".scrollhint", ".draghint"], { opacity: 1, duration: 1 }, "-=0.4");
+intro.to("#loader", { yPercent: -100, duration: 1.1, ease: "power4.inOut" }, 0)
+  .add(() => $("#loader").remove(), 1.1)
+  // le macaron s'assemble sous nos yeux : les miettes se rejoignent, il pivote en place
+  .fromTo(S, { split: reduce ? 0 : 0.55, layer: reduce ? 0 : 0.5 }, { split: 0, layer: 0, duration: 2.2, ease: "power3.inOut" }, 0.15)
+  .from(S, { rotY: reduce ? "+=0" : "-=2.2", scale: reduce ? "*=1" : "*=0.7", duration: 2.4, ease: "power3.out" }, 0.1)
+  .to(splitted.get($(".hero .kicker")), { yPercent: 0, rotate: 0, duration: 1, ease: "power4.out", stagger: 0.04 }, 0.6)
+  .to(splitted.get($(".hero h1")), { yPercent: 0, rotate: 0, duration: 1.3, ease: "power4.out", stagger: 0.09 }, 0.8)
+  .to(".hero [data-fade]", { opacity: 1, y: 0, duration: 1, stagger: 0.15, ease: "power3.out" }, 1.2)
+  .to([".scrollhint", ".draghint"], { opacity: 1, duration: 1 }, 2.1);
 const counter = { v: 0 };
 gsap.to(counter, { v: 100, duration: reduce ? 0.1 : 1.5, ease: "power1.inOut", onUpdate: () => { pct.textContent = Math.round(counter.v); }, onComplete: () => { intro.play(); } });
 if (lenis) { lenis.stop(); intro.eventCallback("onComplete", () => lenis.start()); }

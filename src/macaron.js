@@ -1,204 +1,178 @@
 import * as THREE from "three";
+import { bakeTextures } from "./textures.js";
+import { SH, GA, shellPieces, ganacheGeometry, crumbGeometry, mulberry } from "./geometry.js";
 
-// Chaque parfum : face lisse, pied plus clair et rugueux, garniture
+// Chaque parfum : face lisse, pied et intérieur plus clairs, garniture (et sa rugosité)
 export const FLAVORS = {
-  chocolat: { face: 0x7d5c3d, foot: 0x9c7c52, fill: 0x3a2217, fillRough: 0.3, streak: false },
-  cafe:     { face: 0xb59f86, foot: 0xc9b496, fill: 0xb98a58, fillRough: 0.6, streak: false },
-  cassis:   { face: 0x70505f, foot: 0x805f70, fill: 0x3a2236, fillRough: 0.4, streak: true },
-  pistache: { face: 0x9cc46c, foot: 0xb2d086, fill: 0xefe6c8, fillRough: 0.6, streak: false },
-  framboise:{ face: 0xcc4a73, foot: 0xdb7090, fill: 0xf6d6df, fillRough: 0.6, streak: false },
-  citron:   { face: 0xe6d655, foot: 0xefe27c, fill: 0xfff3b8, fillRough: 0.6, streak: false },
+  chocolat:  { face: 0x86624a, foot: 0x95603d, fill: 0x3c2421, rough: 0.3, streak: false },
+  cafe:      { face: 0xb59f86, foot: 0xc9b496, fill: 0xb98a58, rough: 0.55, streak: false },
+  cassis:    { face: 0x70505f, foot: 0x805f70, fill: 0x3a2236, rough: 0.4, streak: true },
+  pistache:  { face: 0x9cc46c, foot: 0xb2d086, fill: 0xefe6c8, rough: 0.6, streak: false },
+  framboise: { face: 0xcc4a73, foot: 0xdb7090, fill: 0xf6d6df, rough: 0.6, streak: false },
+  citron:    { face: 0xe6d655, foot: 0xefe27c, fill: 0xfff3b8, rough: 0.6, streak: false },
 };
 export const ORDER = ["chocolat", "cafe", "cassis", "pistache", "framboise", "citron"];
 
-// ---------- textures procédurales (bruit de valeur sans raccord) ----------
-function rng(seed) { let s = seed; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
-function noiseField(size, octaves, seed, sx = 1, sy = 1) {
-  const f = new Float32Array(size * size), r = rng(seed);
-  let amp = 1, tot = 0;
-  for (const o of octaves) {
-    const nx = Math.max(1, Math.round(o * sx)), ny = Math.max(1, Math.round(o * sy));
-    const g = Array.from({ length: nx * ny }, r);
-    for (let y = 0; y < size; y++) {
-      const fy = (y / size) * ny, y0 = Math.floor(fy), ty = fy - y0, uy = ty * ty * (3 - 2 * ty);
-      for (let x = 0; x < size; x++) {
-        const fx = (x / size) * nx, x0 = Math.floor(fx), tx = fx - x0, ux = tx * tx * (3 - 2 * tx);
-        const a = g[(y0 % ny) * nx + (x0 % nx)], b = g[(y0 % ny) * nx + ((x0 + 1) % nx)];
-        const c = g[((y0 + 1) % ny) * nx + (x0 % nx)], d = g[((y0 + 1) % ny) * nx + ((x0 + 1) % nx)];
-        f[y * size + x] += amp * ((a + (b - a) * ux) * (1 - uy) + (c + (d - c) * ux) * uy);
-      }
-    }
-    tot += amp; amp *= 0.55;
-  }
-  for (let i = 0; i < f.length; i++) f[i] /= tot;
-  return f;
-}
-function toTexture(field, size, map) {
-  const c = document.createElement("canvas"); c.width = c.height = size;
-  const g = c.getContext("2d"), im = g.createImageData(size, size);
-  for (let i = 0; i < field.length; i++) { const v = Math.max(0, Math.min(255, map(field[i], i))); im.data.set([v, v, v, 255], i * 4); }
-  g.putImageData(im, 0, 0);
-  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
-  return t;
-}
-// pores très fins de la face + quelques points sombres
-const poresTex = () => {
-  const a = noiseField(512, [110, 200, 256], 7), b = noiseField(512, [60], 11);
-  return toTexture(a, 512, (v, i) => 128 + (v - 0.5) * 260 - (b[i] > 0.8 ? 80 : 0));
-};
-// face « brossée » (cassis) : stries presque parallèles
-const streakTex = () => {
-  const s = noiseField(512, [40, 90], 21, 1, 0.06), p = noiseField(512, [128, 200], 5);
-  return toTexture(s, 512, (v, i) => 128 + (v - 0.5) * 330 + (p[i] - 0.5) * 60);
-};
-// pied : grain croustillant à plusieurs échelles, avec alvéoles
-const crumbTex = () => {
-  const a = noiseField(1024, [10, 20, 40, 80, 160], 3), b = noiseField(1024, [48, 96], 17);
-  return toTexture(a, 1024, (v, i) => 40 + v * 240 - (b[i] > 0.7 ? 90 * (b[i] - 0.7) / 0.3 : 0));
-};
-
-// ---------- géométrie ----------
-const hash = i => { const s = Math.sin(i * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
-
-function domeGeometry() {
-  const pts = [new THREE.Vector2(0, 0.2), new THREE.Vector2(0.9, 0.2)];
-  const N = 48;
-  for (let i = N; i >= 0; i--) {
-    const u = i / N, r = u * 0.99;
-    pts.push(new THREE.Vector2(r, 0.2 + 0.3 * Math.pow(1 - Math.pow(u, 3.2), 0.6)));
-  }
-  const geo = new THREE.LatheGeometry(pts, 220);
-  // projection plane : pas de pincement au centre, stries parallèles
-  const p = geo.attributes.position, uv = geo.attributes.uv;
-  for (let i = 0; i < p.count; i++) uv.setXY(i, p.getX(i) * 0.5 + 0.5, p.getZ(i) * 0.5 + 0.5);
-  return geo;
-}
-
-function footGeometry() {
-  const pts = [], H = 22, top = 0.22;
-  for (let j = 0; j <= H; j++) {
-    const t = j / H;
-    const bulge = Math.sin(Math.min(1, t * 1.1) * Math.PI) * 0.06;
-    pts.push(new THREE.Vector2(0.9 + bulge + t * 0.08, t * top));
-  }
-  pts.unshift(new THREE.Vector2(0, 0), new THREE.Vector2(0.88, 0));
-  const geo = new THREE.LatheGeometry(pts, 420);
-  const p = geo.attributes.position;
-  const n3 = (x, y, z) => Math.sin(x * 9.1 + Math.sin(y * 7.3 + z * 3.1)) * Math.sin(y * 11.7 + Math.sin(z * 5.9 + x * 2.3)) * Math.sin(z * 8.3 + Math.sin(x * 6.7 + y * 4.1));
-  for (let i = 0; i < p.count; i++) {
-    const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
-    if (y < 0.001 || Math.hypot(x, z) < 0.89) continue;
-    const a = Math.atan2(z, x), w = THREE.MathUtils.smoothstep(top - y, 0, 0.12) * 0.85 + 0.15;
-    const n = 0.022 * Math.sin(a * 33 + y * 28 + Math.sin(a * 7) * 2) + 0.014 * Math.sin(a * 67 - y * 44 + 2) +
-              0.010 * n3(x * 4, y * 22, z * 4) + 0.008 * Math.sin(a * 131 + y * 95 + 5) + 0.010 * (hash(i) - 0.5);
-    const f = 1 + n * w;
-    p.setX(i, x * f); p.setZ(i, z * f); p.setY(i, y + 0.014 * (hash(i + 99) - 0.5) * w + 0.006 * n3(x * 7, y * 30, z * 7) * w);
-  }
-  geo.computeVertexNormals();
-  return geo;
-}
-
-function fillGeometry() {
-  const pts = [new THREE.Vector2(0, -0.2), new THREE.Vector2(0.86, -0.2), new THREE.Vector2(0.99, -0.12),
-    new THREE.Vector2(1.04, 0), new THREE.Vector2(0.99, 0.12), new THREE.Vector2(0.86, 0.2), new THREE.Vector2(0, 0.2)];
-  const geo = new THREE.LatheGeometry(pts, 160);
-  // ombre de contact : plus sombre près des coques
-  const p = geo.attributes.position, col = new Float32Array(p.count * 3);
-  for (let i = 0; i < p.count; i++) {
-    const k = 0.5 + 0.5 * (1 - THREE.MathUtils.smoothstep(Math.abs(p.getY(i)), 0.02, 0.2));
-    col.set([k, k, k], i * 3);
-  }
-  geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
-  return geo;
-}
+const GAP = 0.6; // écart entre pièces en vue éclatée (repère du macaron)
 
 export function createMacaron(host) {
-  const state = { x: 0, y: 0, scale: 1, rotY: -0.85, rotX: 0.08, explode: 0, flavor: 0, active: true };
-  const api = { state, onFrame: null, pts: null };
+  // split : coques écartées de la ganache · layer : intérieurs détachés des croûtes
+  const state = { x: 0, y: 0, scale: 1, rotX: 0.08, rotY: -0.85, rotZ: 0, split: 0, layer: 0, flavor: 0, active: true };
+  const api = { state, onFrame: null, pts: null, glow: null };
   try {
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const small = Math.min(innerWidth, innerHeight) < 700;
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMapping = THREE.NeutralToneMapping;
     renderer.toneMappingExposure = 1.0;
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
     host.appendChild(renderer.domElement);
 
+    const T = bakeTextures(renderer, small ? 512 : 1024);
+
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
-    camera.position.set(0, 0.35, 6.6);
+    // focale longue (peu de déformation), comme une photo de produit au téléobjectif
+    const camera = new THREE.PerspectiveCamera(24, 1, 0.1, 60);
+    camera.position.set(0, 0.44, 8.3);
     camera.lookAt(0, 0, 0);
 
-    // « studio » photo : softboxes → reflets doux et réalistes
+    // studio photo : grands softboxes chauds → reflets doux
     const studio = new THREE.Scene();
-    studio.background = new THREE.Color(0x2a1d3a);
+    studio.background = new THREE.Color(0x221830);
     const box = (w, h, col, i, pos) => {
       const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h),
         new THREE.MeshBasicMaterial({ color: new THREE.Color(col).multiplyScalar(i), side: THREE.DoubleSide }));
       m.position.set(...pos); m.lookAt(0, 0, 0); studio.add(m);
     };
-    box(9, 6, 0xfff0e0, 5, [-5, 5, 5]);
-    box(2, 8, 0xc4e09a, 0.5, [6, 1, -3]);
-    box(7, 3, 0xa77bdc, 2, [3, -3, 4]);
-    box(12, 3, 0xfff6ea, 1.5, [0, 6, -4]);
+    box(9, 6, 0xfff0e0, 4.5, [-5, 5, 5]);
+    box(3, 8, 0xffe2c4, 2.2, [6, 1.5, -3]);
+    box(9, 4, 0xa77bdc, 0.25, [3, -3, 4]);
+    box(12, 3, 0xfff6ea, 1.4, [0, 6, -4]);
     const pm = new THREE.PMREMGenerator(renderer);
     scene.environment = pm.fromScene(studio, 0.04).texture;
-    const key = new THREE.DirectionalLight(0xfff0dc, 2.0);
+    pm.dispose();
+
+    const key = new THREE.DirectionalLight(0xfff0dc, 2.3);
     key.position.set(-3.5, 4.5, 5);
     key.castShadow = true;
     key.shadow.mapSize.set(2048, 2048);
-    Object.assign(key.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3, near: 1, far: 16 });
-    key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02; key.shadow.radius = 5;
-    scene.add(key);
+    Object.assign(key.shadow.camera, { left: -3.2, right: 3.2, top: 3.2, bottom: -3.2, near: 1, far: 16 });
+    key.shadow.bias = -0.0005;
+    key.shadow.normalBias = 0.025;
+    key.shadow.radius = 4;
+    const rim = new THREE.DirectionalLight(0xffe4c4, 1.5);
+    rim.position.set(4.5, 2.5, -4);
+    scene.add(key, rim);
 
-    const pores = poresTex(), streaks = streakTex(), crumb = crumbTex();
-    const f0 = FLAVORS.chocolat;
+    // matériaux : couleur du parfum × albédo procédural, relief par cartes de normales
+    const v2 = s => new THREE.Vector2(s, s);
     const faceMat = new THREE.MeshPhysicalMaterial({
-      color: f0.face, roughness: 0.62, clearcoat: 0.05, clearcoatRoughness: 0.7,
-      sheen: 0.2, sheenRoughness: 0.6, sheenColor: new THREE.Color(0xd8b890),
-      bumpMap: pores, bumpScale: 0.7, envMapIntensity: 0.4,
+      map: T.faceA, normalMap: T.faceN, normalScale: v2(1), roughness: 0.66,
+      sheen: 0.35, sheenRoughness: 0.7, sheenColor: new THREE.Color(0xe0cdb5), envMapIntensity: 0.55,
     });
-    const footMat = new THREE.MeshPhysicalMaterial({
-      color: f0.foot, roughness: 0.95, sheen: 0.3, sheenRoughness: 0.8, sheenColor: new THREE.Color(0xf0dcc0),
-      bumpMap: crumb, bumpScale: 4.5, envMapIntensity: 0.3,
+    const crumbMat = new THREE.MeshPhysicalMaterial({
+      map: T.crumbA, normalMap: T.crumbN, normalScale: v2(1), roughness: 0.93,
+      sheen: 0.25, sheenRoughness: 0.9, sheenColor: new THREE.Color(0xf2e4cf), envMapIntensity: 0.35,
     });
-    footMat.bumpMap.repeat.set(4, 1);
-    const fillMat = new THREE.MeshPhysicalMaterial({
-      color: f0.fill, roughness: f0.fillRough, clearcoat: 0.5, clearcoatRoughness: 0.3, envMapIntensity: 1.0, vertexColors: true,
+    const ganMat = new THREE.MeshPhysicalMaterial({
+      map: T.ganA, normalMap: T.ganN, normalScale: v2(1), roughness: 0.3,
+      clearcoat: 0.55, clearcoatRoughness: 0.28, clearcoatNormalMap: T.ganN, clearcoatNormalScale: v2(0.6), envMapIntensity: 1,
     });
+    const sideMat = ganMat.clone();
+    sideMat.map = T.sideA; sideMat.normalMap = T.sideN; sideMat.clearcoatNormalMap = T.sideN;
 
-    const geos = [domeGeometry(), footGeometry()];
-    const makeShell = () => {
-      const g = new THREE.Group();
-      for (const [geo, mat] of [[geos[0], faceMat], [geos[1], footMat]]) {
-        const m = new THREE.Mesh(geo, mat); m.castShadow = m.receiveShadow = true; g.add(m);
-      }
-      return g;
-    };
-    const top = makeShell(), bottom = makeShell();
-    bottom.rotation.x = Math.PI;
-    const fill = new THREE.Mesh(fillGeometry(), fillMat);
-    fill.castShadow = fill.receiveShadow = true;
+    // pièces : croûte et intérieur de chaque coque, ganache au centre
+    const R = small ? 220 : 360;
+    const shellMats = [faceMat, crumbMat];
+    const mesh = (geo, mats) => { const m = new THREE.Mesh(geo, mats); m.castShadow = m.receiveShadow = true; return m; };
+    const A = shellPieces(1.3, R), B = shellPieces(4.1, R);
+    const crustTop = mesh(A.crust, shellMats), slabTop = mesh(A.slab, shellMats);
+    const crustBot = mesh(B.crust, shellMats), slabBot = mesh(B.slab, shellMats);
+    const shellTop = new THREE.Group(), shellBot = new THREE.Group();
+    shellTop.add(slabTop, crustTop);
+    shellBot.add(slabBot, crustBot);
+    shellBot.rotation.x = Math.PI;
+    const fill = mesh(ganacheGeometry(Math.round(R * 0.6)), [ganMat, sideMat]);
     const macaron = new THREE.Group();
-    macaron.add(top, bottom, fill);
-    macaron.rotation.z = -Math.PI / 2;
-    const spin = new THREE.Group(); spin.add(macaron); scene.add(spin);
+    macaron.add(shellTop, shellBot, fill);
+    macaron.rotation.z = -Math.PI / 2; // posé sur la tranche
+    const spin = new THREE.Group();
+    spin.add(macaron);
+    scene.add(spin);
 
-    // repères pour les légendes de la vue éclatée
-    const mk = (parent, x, y, z) => { const o = new THREE.Object3D(); o.position.set(x, y, z); parent.add(o); return o; };
-    const marks = [mk(top, 0, 0.5, 0), mk(fill, 1.04, 0, 0), mk(bottom, 0.98, 0.1, 0)];
+    // miettes qui s'échappent quand on ouvre le macaron
+    const rnd = mulberry(7);
+    const NC = small ? 72 : 144;
+    const cm = [0, 1, 2].map(k => {
+      const m = new THREE.InstancedMesh(crumbGeometry(k * 2.7 + 0.5), crumbMat, NC / 3);
+      m.frustumCulled = false; m.visible = false; macaron.add(m);
+      return m;
+    });
+    const crumbs = Array.from({ length: NC }, (_, j) => {
+      const kind = j % 10 < 4 ? 0 : j % 10 < 7 ? 1 : 2; // 0 : contre la ganache · 1 : entre intérieur et croûte · 2 : libres
+      return {
+        m: cm[j % 3], i: Math.floor(j / 3), kind, side: rnd() < 0.5 ? -1 : 1, f: 0.12 + rnd() * 0.76,
+        // les miettes libres tombent plutôt vers le bas (+X local = bas à l'écran)
+        ang: kind < 2 || rnd() < 0.4 ? rnd() * Math.PI * 2 : (rnd() - 0.5) * 2.6, r: kind < 2 ? 0.45 + rnd() * 0.85 : 0.9 + rnd() * 0.6,
+        size: 0.012 + Math.pow(rnd(), 2.2) * 0.04, delay: 0.25 + rnd() * 0.35, ph: rnd() * 6.28, ws: 0.4 + rnd() * 0.6,
+        rx: rnd() * 6.28, ry: rnd() * 6.28, rz: rnd() * 6.28, sx: (rnd() - 0.5) * 0.6, sy: (rnd() - 0.5) * 0.6,
+      };
+    });
+    const dummy = new THREE.Object3D();
+    const sstep = (x, a, b) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+    function updateCrumbs(t) {
+      const L = state.layer, vis = L > 0.2;
+      cm.forEach(m => { m.visible = vis; });
+      if (!vis) return;
+      const base = SH.split + state.split * GAP; // dessous de l'intérieur (repère du macaron)
+      for (const c of crumbs) {
+        const a = sstep(L, c.delay, c.delay + 0.35);
+        let y;
+        if (c.kind === 0) y = GA.h + (base - GA.h) * c.f;
+        else if (c.kind === 1) y = base + SH.split + 0.01 + Math.max(0, L * GAP - 0.02) * c.f;
+        else y = c.f * 1.5 * (0.4 + 0.6 * L);
+        const r = c.r * (0.75 + 0.25 * a) + Math.sin(t * c.ws + c.ph) * 0.02;
+        const ang = c.ang + Math.sin(t * 0.2 + c.ph) * 0.05;
+        dummy.position.set(Math.cos(ang) * r, c.side * y + Math.sin(t * c.ws * 1.3 + c.ph) * 0.015, Math.sin(ang) * r);
+        dummy.rotation.set(c.rx + t * c.sx, c.ry + t * c.sy, c.rz);
+        dummy.scale.setScalar(c.size * a);
+        dummy.updateMatrix();
+        c.m.setMatrixAt(c.i, dummy.matrix);
+      }
+      cm.forEach(m => { m.instanceMatrix.needsUpdate = true; });
+    }
+
+    // repères des légendes : un point sur la face visible de chaque pièce
+    const parts = [crustBot, slabBot, fill, slabTop, crustTop]; // ordre le long de l'axe
+    const FACE_Y = [[0.34, 0.112], [0.105, 0], [-0.125, 0.125], [0, 0.105], [0.112, 0.34]]; // face vers −Y / +Y du macaron
+    const axisW = new THREE.Vector3(), toCam = new THREE.Vector3(), q = new THREE.Vector3();
+    function anchors() {
+      axisW.set(0, 1, 0).transformDirection(macaron.matrixWorld);
+      toCam.copy(camera.position).sub(macaron.getWorldPosition(q));
+      const facing = axisW.dot(toCam) > 0 ? 1 : 0;
+      const w = host.clientWidth, h = host.clientHeight;
+      const proj = (p, i, sx) => {
+        q.set(sx * 0.72, FACE_Y[i][facing], 0);
+        p.localToWorld(q).project(camera);
+        return { x: (q.x + 1) / 2 * w, y: (1 - q.y) / 2 * h };
+      };
+      return { up: parts.map((p, i) => proj(p, i, -1)), side: parts.map((p, i) => proj(p, i, 1)) };
+    }
 
     function resize() {
       const w = host.clientWidth, h = host.clientHeight;
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
-      camera.position.z = w / h < 0.9 ? 9.4 : 6.6;
+      camera.position.z = w / h < 0.9 ? 11.8 : 8.3;
       camera.updateProjectionMatrix();
     }
-    new ResizeObserver(resize).observe(host); resize();
+    new ResizeObserver(resize).observe(host);
+    resize();
+    renderer.compile(scene, camera); // shaders prêts avant l'intro : pas d'à-coup à la première image
 
-    // glisser pour tourner, retour élastique vers la pose du scroll
+    // glisser pour tourner, puis retour élastique vers la pose du scroll
     let dY = 0, dX = 0, vY = 0, vX = 0, drag = false, lx = 0, ly = 0;
     const el = renderer.domElement;
     el.addEventListener("pointerdown", e => { drag = true; lx = e.clientX; ly = e.clientY; el.setPointerCapture(e.pointerId); host.classList.add("grab"); });
@@ -210,43 +184,63 @@ export function createMacaron(host) {
       document.documentElement.classList.add("touched");
     });
     const up = () => { drag = false; host.classList.remove("grab"); dY = ((dY + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI; };
-    el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+    el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", up);
 
+    // couleurs : mélange continu entre deux parfums voisins
     const ca = new THREE.Color(), cb = new THREE.Color();
-    const mix = (target, key, i, j, t) => target.copy(ca.setHex(FLAVORS[ORDER[i]][key])).lerp(cb.setHex(FLAVORS[ORDER[j]][key]), t);
-    let lastF = -1, lastNear = -1;
+    const mixC = (target, k, i, j, t) => target.copy(ca.setHex(FLAVORS[ORDER[i]][k])).lerp(cb.setHex(FLAVORS[ORDER[j]][k]), t);
+    let lastF = -1, lastStreak = -1;
     function applyFlavor(f) {
       if (Math.abs(f - lastF) < 0.001) return;
       lastF = f;
       const i = Math.min(ORDER.length - 1, Math.floor(f)), j = Math.min(ORDER.length - 1, i + 1);
       const t = THREE.MathUtils.smoothstep(f - i, 0.25, 0.75);
-      mix(faceMat.color, "face", i, j, t); mix(footMat.color, "foot", i, j, t); mix(fillMat.color, "fill", i, j, t);
-      fillMat.roughness = THREE.MathUtils.lerp(FLAVORS[ORDER[i]].fillRough, FLAVORS[ORDER[j]].fillRough, t);
-      const near = FLAVORS[ORDER[t > 0.5 ? j : i]].streak ? 1 : 0;
-      if (near !== lastNear) { lastNear = near; faceMat.bumpMap = near ? streaks : pores; faceMat.bumpScale = near ? 2.4 : 0.7; faceMat.needsUpdate = true; }
+      mixC(faceMat.color, "face", i, j, t);
+      mixC(crumbMat.color, "foot", i, j, t);
+      mixC(ganMat.color, "fill", i, j, t);
+      sideMat.color.copy(ganMat.color);
+      ganMat.roughness = sideMat.roughness = THREE.MathUtils.lerp(FLAVORS[ORDER[i]].rough, FLAVORS[ORDER[j]].rough, t);
+      const st = FLAVORS[ORDER[t > 0.5 ? j : i]].streak ? 1 : 0;
+      if (st !== lastStreak) {
+        lastStreak = st;
+        faceMat.map = st ? T.streakA : T.faceA;
+        faceMat.normalMap = st ? T.streakN : T.faceN;
+        faceMat.needsUpdate = true;
+      }
       api.glow = "#" + faceMat.color.getHexString();
     }
 
-    const clock = new THREE.Clock(), v = new THREE.Vector3();
+    const t0 = performance.now();
     renderer.setAnimationLoop(() => {
-      if (api.onFrame) api.onFrame();
-      if (!state.active) return;
-      const t = clock.getElapsedTime();
+      if (!state.active) { api.pts = null; if (api.onFrame) api.onFrame(); return; }
+      const t = (performance.now() - t0) / 1000;
       if (!drag) { vY *= 0.94; vX *= 0.92; dY += vY; dX += vX; dY += (0 - dY) * 0.025; dX += (0 - dX) * 0.04; }
       applyFlavor(state.flavor);
-      spin.position.set(state.x, state.y + Math.sin(t * 1.1) * 0.05, 0);
-      spin.rotation.y = state.rotY + dY + Math.sin(t * 0.5) * 0.06;
-      spin.rotation.x = state.rotX + dX;
+      spin.position.set(state.x, state.y + Math.sin(t * 1.1) * 0.04, 0);
+      spin.rotation.set(state.rotX + dX, state.rotY + dY + Math.sin(t * 0.5) * 0.05, state.rotZ);
       macaron.scale.setScalar(1.18 * state.scale);
-      top.position.y = 0.1 + state.explode; bottom.position.y = -0.1 - state.explode;
+      const sp = state.split, L = state.layer;
+      shellTop.position.y = SH.split + sp * GAP;
+      shellBot.position.y = -(SH.split + sp * GAP);
+      // en vue éclatée, chaque pièce flotte et s'incline un peu, comme en apesanteur
+      crustTop.position.y = L * GAP + Math.sin(t * 0.6 + 3) * 0.014 * L;
+      crustBot.position.y = L * GAP + Math.sin(t * 0.7 + 1) * 0.014 * L;
+      slabTop.position.y = Math.sin(t * 0.9 + 1) * 0.012 * L;
+      slabBot.position.y = Math.sin(t * 0.8 + 2) * 0.012 * L;
+      crustTop.rotation.set(0.05 * L + Math.sin(t * 0.5) * 0.012 * L, 0, -0.04 * L);
+      crustBot.rotation.set(-0.04 * L, 0, 0.05 * L + Math.sin(t * 0.6) * 0.012 * L);
+      slabTop.rotation.set(0.03 * L, 0, 0.025 * L);
+      slabBot.rotation.set(-0.025 * L, 0, -0.03 * L);
+      fill.rotation.set(Math.sin(t * 0.5) * 0.02 * sp, 0, Math.cos(t * 0.6) * 0.02 * sp);
+      updateCrumbs(t);
       renderer.render(scene, camera);
-      if (state.explode > 0.02) {
-        const w = host.clientWidth, h = host.clientHeight;
-        api.pts = marks.map(m => { m.getWorldPosition(v); v.project(camera); return { x: (v.x + 1) / 2 * w, y: (1 - v.y) / 2 * h }; });
-      } else api.pts = null;
+      api.pts = sp > 0.01 || L > 0.01 ? anchors() : null;
+      if (api.onFrame) api.onFrame();
     });
     host.classList.add("ready");
   } catch (e) {
+    console.error(e);
     host.classList.add("no3d");
   }
   return api;
