@@ -212,9 +212,8 @@ export function createMacaron(host) {
     }
 
     const t0 = performance.now();
-    renderer.setAnimationLoop(() => {
-      if (!state.active) { api.pts = null; if (api.onFrame) api.onFrame(); return; }
-      const t = (performance.now() - t0) / 1000;
+    // une image : t en secondes (la vidéo de présentation l'appelle image par image)
+    function frame(t) {
       if (!drag) { vY *= 0.94; vX *= 0.92; dY += vY; dX += vX; dY += (0 - dY) * 0.025; dX += (0 - dX) * 0.04; }
       applyFlavor(state.flavor);
       spin.position.set(state.x, state.y + Math.sin(t * 1.1) * 0.04, 0);
@@ -236,6 +235,12 @@ export function createMacaron(host) {
       updateCrumbs(t);
       renderer.render(scene, camera);
       api.pts = sp > 0.01 || L > 0.01 ? anchors() : null;
+    }
+    api.renderAt = frame;
+    renderer.setAnimationLoop(() => {
+      if (api.manual) return;
+      if (!state.active) { api.pts = null; if (api.onFrame) api.onFrame(); return; }
+      frame((performance.now() - t0) / 1000);
       if (api.onFrame) api.onFrame();
     });
     host.classList.add("ready");

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>La Valise à Macarons — vidéo</title>
+<style>
+@font-face{font-family:"Bodoni Moda";font-weight:400;font-style:normal;src:url(fonts/bodoni-moda-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Bodoni Moda";font-weight:400;font-style:italic;src:url(fonts/bodoni-moda-latin-400-italic.woff2) format("woff2")}
+@font-face{font-family:"Bodoni Moda";font-weight:500;font-style:normal;src:url(fonts/bodoni-moda-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:"Bodoni Moda";font-weight:500;font-style:italic;src:url(fonts/bodoni-moda-latin-500-italic.woff2) format("woff2")}
+@font-face{font-family:"Jost";font-weight:300;src:url(fonts/jost-latin-300-normal.woff2) format("woff2")}
+@font-face{font-family:"Jost";font-weight:400;src:url(fonts/jost-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Jost";font-weight:500;src:url(fonts/jost-latin-500-normal.woff2) format("woff2")}
+:root{--night:#150829;--vio:#5b2d91;--vio-l:#a77bdc;--grn:#8db860;--grn-l:#c4e09a;--ink:#24103f;--paper:#fbf9f5;--ivory:#f4efe3;--serif:"Bodoni Moda",Georgia,serif;--sans:"Jost",system-ui,sans-serif;--glow:#86624a}
+*{box-sizing:border-box;margin:0}
+html,body{width:1280px;height:720px;overflow:hidden;background:var(--night)}
+#film{position:relative;width:1280px;height:720px;overflow:hidden;background:var(--night);color:var(--ivory);font-family:var(--sans)}
+.layer{position:absolute;inset:0}
+#glow{background:radial-gradient(ellipse 45% 60% at var(--gx,62%) 50%,color-mix(in srgb,var(--glow) 60%,transparent),transparent 70%),radial-gradient(ellipse at 10% 100%,rgba(141,184,96,.15),transparent 55%),var(--night)}
+#bokeh i{position:absolute;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--glow) 85%,#fff 10%),transparent 70%)}
+#stage canvas{width:1280px!important;height:720px!important;display:block}
+.w{display:inline-block;overflow:hidden;vertical-align:bottom;padding-bottom:.1em;margin-bottom:-.1em}
+.i{display:inline-block}
+.kick{font:500 13px var(--sans);letter-spacing:.34em;text-transform:uppercase;color:var(--grn-l)}
+/* A : logo */
+#A{display:grid;place-items:center;text-align:center}
+#A .box{display:grid;justify-items:center;gap:26px}
+#A img{width:640px}
+#A .line{width:120px;height:1px;background:var(--grn)}
+/* B : accroche */
+#B .txt{position:absolute;left:90px;top:200px;width:660px}
+#B h1{font:400 68px/1.06 var(--serif);letter-spacing:-.01em;margin:18px 0}
+#B h1 em{color:var(--grn-l)}
+#B p{font:300 20px/1.6 var(--sans);color:#d6cdea;width:470px}
+/* C : vue éclatée */
+#labels{position:absolute;inset:0}
+#labels svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+#labels line{stroke:rgba(244,239,227,.85);stroke-width:1}
+#labels circle{fill:#f4efe3}
+.lab{position:absolute;left:0;top:0;text-align:center;font:400 17px/1.25 var(--serif);color:var(--ivory);white-space:nowrap;text-shadow:0 2px 12px rgba(0,0,0,.7)}
+#C .cap{position:absolute;left:0;right:0;bottom:46px;text-align:center}
+#C .cap h2{font:400 40px var(--serif);margin-top:10px}
+#C .cap h2 em{color:var(--grn-l)}
+/* D : parfums */
+#D .big{position:absolute;inset:0;display:grid;place-items:center}
+#D .bw{grid-area:1/1;font:400 250px/1 var(--serif);color:transparent;-webkit-text-stroke:1.2px rgba(244,239,227,.4);white-space:nowrap;opacity:0}
+#D .info{position:absolute;left:0;right:0;bottom:52px;text-align:center}
+#D .fn{font:400 42px var(--serif);height:52px;position:relative}
+#D .fn span{position:absolute;left:0;right:0;opacity:0}
+#D .count{position:absolute;left:84px;top:84px}
+#D .count b{display:block;font:400 110px/1 var(--serif);color:var(--ivory)}
+#D .count span{font:300 18px var(--sans);color:#d6cdea}
+/* E : univers clair */
+#wipe{background:var(--paper);clip-path:circle(0% at 50% 50%)}
+#E{background:var(--paper);color:var(--ink);overflow:hidden}
+#E .cols{position:absolute;inset:-160px 0;display:grid;grid-template-columns:repeat(5,1fr);gap:18px;padding:0 18px}
+#E .col{display:grid;gap:18px;align-content:start}
+#E .col img{width:100%;aspect-ratio:1;object-fit:cover;display:block;box-shadow:0 20px 40px -24px rgba(36,16,63,.5)}
+#E .veil{position:absolute;inset:0;background:radial-gradient(ellipse 42% 46% at 50% 50%,rgba(251,249,245,.97) 55%,rgba(251,249,245,0) 100%)}
+#E .msg{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+#E .msg h2{font:400 64px/1.08 var(--serif);letter-spacing:-.01em;margin:16px 0}
+#E .msg h2 em{color:var(--vio)}
+#E .msg p{font:400 19px var(--sans);color:#5d5172}
+#E .kick,#F .kick{color:#4f7a28}
+/* F : présentoirs + fin */
+#F{background:var(--paper);color:var(--ink)}
+#F .strip{position:absolute;top:70px;left:0;display:flex;gap:22px;padding-left:70px}
+#F .strip figure{width:300px;height:400px;overflow:hidden;position:relative;flex:none;box-shadow:0 30px 50px -30px rgba(36,16,63,.6)}
+#F .strip img{width:100%;height:100%;object-fit:cover}
+#F .strip figcaption{position:absolute;left:0;right:0;bottom:0;padding:30px 16px 14px;color:#fff;font:italic 22px var(--serif);background:linear-gradient(0deg,rgba(21,8,41,.85),transparent)}
+#F .ptxt{position:absolute;left:70px;bottom:70px}
+#F .ptxt h2{font:400 46px var(--serif);margin-top:12px}
+#F .ptxt h2 em{color:var(--vio)}
+#G{background:var(--paper);color:var(--ink);display:grid;place-items:center;text-align:center}
+#G .box{display:grid;justify-items:center;gap:20px}
+#G img{width:560px}
+#G h2{font:400 54px/1.15 var(--serif)}
+#G h2 em{color:var(--vio)}
+#G .cta{display:inline-block;padding:16px 36px;background:var(--vio);color:#fff;font:500 15px var(--sans);letter-spacing:.24em;text-transform:uppercase;border-radius:999px}
+#G .info{font:400 18px var(--sans);color:#5d5172;letter-spacing:.04em}
+#G .info b{color:#4f7a28;font-weight:500}
+#G .bar{width:0;height:3px;background:linear-gradient(90deg,var(--vio),var(--grn))}
+</style>
+</head>
+<body>
+<div id="film">
+  <div class="layer" id="glow"></div>
+  <div class="layer" id="bokeh"></div>
+  <div class="layer" id="stage"></div>
+  <div class="layer" id="labels"><svg><line/><line/><line/><line/><line/><circle r="4"/><circle r="4"/><circle r="4"/><circle r="4"/><circle r="4"/></svg>
+    <div class="lab">Coque<br>supérieure</div><div class="lab">Intérieur<br>de la coque</div><div class="lab">Ganache<br>chocolat</div><div class="lab">Intérieur<br>de la coque</div><div class="lab">Coque<br>inférieure</div></div>
+
+  <div class="layer" id="A"><div class="box"><img src="../img/logo-clair.webp" alt=""><div class="line"></div><p class="kick" data-split>Maison de macarons · Limoges</p></div></div>
+  <div class="layer" id="B"><div class="txt"><p class="kick" data-split>Depuis 2013, place de la Motte</p><h1 data-split>L'art du macaron,<br><em>composé pour vous.</em></h1><p class="fade">Des coques fines, des garnitures généreuses, sucrées ou salées.</p></div></div>
+  <div class="layer" id="C"><div class="cap"><p class="kick" data-split>Au cœur du macaron</p><h2 data-split>Cinq couches, <em>une seule bouchée.</em></h2></div></div>
+  <div class="layer" id="D">
+    <div class="big"><span class="bw">Chocolat</span><span class="bw">Café</span><span class="bw">Cassis</span><span class="bw">Pistache</span><span class="bw">Framboise</span><span class="bw">Citron</span></div>
+    <div class="count"><b id="cnt">0</b><span>parfums sucrés &amp; salés</span></div>
+    <div class="info"><p class="kick">Nos parfums</p><div class="fn"><span>Chocolat</span><span>Café</span><span>Cassis</span><span>Pistache</span><span>Framboise</span><span>Citron</span></div></div>
+  </div>
+  <div class="layer" id="wipe"></div>
+  <div class="layer" id="E"><div class="cols" id="cols"></div><div class="veil"></div>
+    <div class="msg"><div><p class="kick" data-split>38 parfums</p><h2 data-split>De la rose<br><em>au foie gras.</em></h2><p class="fade">Sucrés à 1,20 € · Salés à 1,30 €</p></div></div></div>
+  <div class="layer" id="F">
+    <div class="strip" id="strip">
+      <figure><img src="../img/presentoirs/pyramideronde10.webp" alt=""><figcaption>La pyramide</figcaption></figure>
+      <figure><img src="../img/presentoirs/train20.webp" alt=""><figcaption>Le train</figcaption></figure>
+      <figure><img src="../img/presentoirs/dino1.webp" alt=""><figcaption>Le dinosaure</figcaption></figure>
+      <figure><img src="../img/presentoirs/chienballon1.webp" alt=""><figcaption>Le chien ballon</figcaption></figure>
+      <figure><img src="../img/boite-12.webp" alt=""><figcaption>La boîte de 12</figcaption></figure>
+    </div>
+    <div class="ptxt"><p class="kick" data-split>Boîtes &amp; présentoirs</p><h2 data-split>De 8 à 24 macarons, <em>ou une pyramide.</em></h2></div>
+  </div>
+  <div class="layer" id="G"><div class="box">
+    <img src="../img/logo-violet.webp" alt="">
+    <div class="bar"></div>
+    <h2 data-split>Composez votre <em>valise.</em></h2>
+    <span class="cta">Commandez au 09 84 18 33 23</span>
+    <p class="info"><b>15 place de la Motte · Limoges</b> · du mardi au samedi, 10h – 19h</p>
+  </div></div>
+</div>
+<script src="video.min.js"></script>
+</body>
+</html>
