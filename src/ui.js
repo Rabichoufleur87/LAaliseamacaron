@@ -2,17 +2,47 @@
 const $ = s => document.querySelector(s);
 const eur = n => n.toFixed(2).replace(".", ",") + " €";
 const SWEET = 1.2, SAVORY = 1.3;
+// les parfums de la boutique : [fichier photo, nom, type]
 const FLAVORS = [
-  { name: "Chocolat", type: "sucré", color: "#5a3a2a" },
-  { name: "Pistache", type: "sucré", color: "#b5d27a" },
-  { name: "Café", type: "sucré", color: "#b59f86" },
-  { name: "Cassis", type: "sucré", color: "#70505f" },
-  { name: "Mojito", type: "sucré", color: "#9ed36a" },
-  { name: "Framboise", type: "sucré", color: "#d9456b" },
-  { name: "Citron", type: "sucré", color: "#f2e05a" },
-  { name: "Chèvre", type: "salé", color: "#efe6d2" },
-  { name: "Tomate-basilic", type: "salé", color: "#d8563a" },
-].map(f => ({ ...f, price: f.type === "salé" ? SAVORY : SWEET }));
+  ["abricot-et-the-a-la-bergamotte", "Abricot & thé à la bergamote", "sucré"],
+  ["amandes", "Amandes", "sucré"],
+  ["avocat", "Avocat", "salé"],
+  ["banane-chocolat-noir", "Banane & chocolat noir", "sucré"],
+  ["cafe", "Café", "sucré"],
+  ["caramel-beurre-sale", "Caramel beurre salé", "sucré"],
+  ["cassis", "Cassis", "sucré"],
+  ["chevre-et-miel", "Chèvre & miel", "salé"],
+  ["chocolat-lait", "Chocolat au lait", "sucré"],
+  ["chocolat-cote-d-ivoire", "Chocolat Côte d'Ivoire", "sucré"],
+  ["chocolat-origine-vietnam", "Chocolat origine Vietnam", "sucré"],
+  ["chorizo", "Chorizo", "salé"],
+  ["citron", "Citron", "sucré"],
+  ["citron-vert-et-basilic", "Citron vert & basilic", "sucré"],
+  ["cookie", "Cookie", "sucré"],
+  ["foie-gras-et-figues", "Foie gras & figues", "salé"],
+  ["fraise", "Fraise", "sucré"],
+  ["framboise", "Framboise", "sucré"],
+  ["fruit-de-la-passion", "Fruit de la passion", "sucré"],
+  ["mangue", "Mangue", "sucré"],
+  ["menthe-et-chocolat-noir", "Menthe & chocolat noir", "sucré"],
+  ["myrtille", "Myrtille", "sucré"],
+  ["noisettes-torrefiees-et-chocolat-lait", "Noisettes torréfiées & chocolat au lait", "sucré"],
+  ["noix-et-figues", "Noix & figues", "sucré"],
+  ["noix-de-cajou-truffees", "Noix de cajou truffées", "salé"],
+  ["noix-de-coco-et-chocolat-noir", "Noix de coco & chocolat noir", "sucré"],
+  ["olives-noires-et-citron-confit", "Olives noires & citron confit", "salé"],
+  ["parmesan-et-tomates", "Parmesan & tomates", "salé"],
+  ["pistache", "Pistache", "sucré"],
+  ["pop-corn-et-caramel", "Pop-corn & caramel", "sucré"],
+  ["praline", "Praliné", "sucré"],
+  ["praline-cacahuete", "Praliné cacahuète", "sucré"],
+  ["roquefort", "Roquefort", "salé"],
+  ["rose", "Rose", "sucré"],
+  ["sesame-et-gingembre", "Sésame & gingembre", "salé"],
+  ["tiramisu", "Tiramisu", "sucré"],
+  ["truite-fumee-citronnee", "Truite fumée citronnée", "salé"],
+  ["vanille", "Vanille", "sucré"]
+].map(([slug, name, type]) => ({ slug, name, type, img: `img/macarons/${slug}.webp`, price: type === "salé" ? SAVORY : SWEET }));
 const SIZES = [8, 12, 18, 24];
 
 export function initUI() {
@@ -24,7 +54,7 @@ export function initUI() {
 
   const renderFlavors = f => {
     $("#flavors").innerHTML = FLAVORS.filter(x => f === "all" || x.type === f).map(x =>
-      `<div class="flavor"><span class="dot" style="background:${x.color}"></span><strong>${x.name}</strong><small>${x.type} · ${eur(x.price)}</small></div>`).join("");
+      `<figure class="flavor"><img src="${x.img}" alt="Macaron ${x.name}" loading="lazy" width="420" height="420"><figcaption><strong>${x.name}</strong><small>${x.type} · ${eur(x.price)}</small></figcaption></figure>`).join("");
   };
   renderFlavors("all");
   document.querySelectorAll(".tab[data-f]").forEach(t => t.onclick = () => {
@@ -37,7 +67,7 @@ export function initUI() {
   const sum = () => qty.reduce((a, b) => a + b, 0);
   $("#sizePick").innerHTML = [6, ...SIZES].map(n => `<button class="tab${n === max ? " on" : ""}" data-n="${n}">${n === 6 ? "Sachet (6)" : n}</button>`).join("");
   $("#builder").innerHTML = FLAVORS.map(f => `
-    <div class="item"><div>${f.name}<small>${f.type} · ${eur(f.price)}</small></div>
+    <div class="item"><img src="${f.img}" alt="" loading="lazy" width="44" height="44"><div class="nm">${f.name}<small>${f.type} · ${eur(f.price)}</small></div>
     <div class="qty"><button type="button" aria-label="Retirer ${f.name}">−</button><output>0</output><button type="button" aria-label="Ajouter ${f.name}">+</button></div></div>`).join("");
   [...$("#builder").children].forEach((el, i) => {
     const [m, p] = el.querySelectorAll("button");

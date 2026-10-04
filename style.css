@@ -187,3 +187,24 @@ footer{text-align:center;padding:40px 20px 36px;border-top:1px solid var(--line)
   .co{text-align:left;font-size:.82rem}
   .co br{display:none}
 }
+
+/* photos de la boutique */
+.logo img{display:block;height:34px;width:auto}
+.flavors{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+.flavor{margin:0;padding:0;overflow:hidden}
+.flavor img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:cover;transition:transform .6s cubic-bezier(.2,.7,.2,1)}
+.flavor:hover img{transform:scale(1.07)}
+.flavor figcaption{padding:12px 10px 14px}
+.item img{width:44px;height:44px;border-radius:50%;object-fit:cover;flex:none}
+.item .nm{flex:1;min-width:0}
+.boxshot{margin:0 auto 34px;max-width:420px}
+.boxshot img{display:block;width:100%;height:auto;border:1px solid var(--line)}
+.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.ph{margin:0;position:relative;overflow:hidden;border:1px solid var(--line)}
+.ph.tall{grid-row:span 2}
+.ph img{display:block;width:100%;height:100%;object-fit:cover;aspect-ratio:3/4;transition:transform .8s cubic-bezier(.2,.7,.2,1)}
+.ph.tall img{aspect-ratio:auto}
+.ph:hover img{transform:scale(1.05)}
+.ph figcaption{position:absolute;left:0;right:0;bottom:0;padding:28px 14px 12px;font:italic 1.1rem var(--serif);background:linear-gradient(0deg,rgba(21,8,41,.85),transparent)}
+.footlogo{display:block;width:150px;height:auto;margin:0 auto 26px}
+@media (max-width:860px){.gallery{grid-template-columns:1fr 1fr}.ph.tall{grid-row:span 1}.ph.tall img{aspect-ratio:3/4}.logo img{height:28px}.flavors{grid-template-columns:1fr 1fr}}
