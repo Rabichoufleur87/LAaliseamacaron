@@ -52,7 +52,7 @@ const root = document.documentElement;
 // défilement fluide
 let lenis = null;
 if (!reduce) {
-  lenis = new Lenis({ lerp: 0.09, smoothWheel: true });
+  lenis = new Lenis({ lerp: 0.12, smoothWheel: true });
   lenis.on("scroll", ScrollTrigger.update);
   gsap.ticker.add(t => lenis.raf(t * 1000));
   gsap.ticker.lagSmoothing(0);
@@ -91,20 +91,20 @@ mm.add({ desk: "(min-width: 861px)", mob: "(max-width: 860px)" }, ctx => {
     defaults: { ease: "power2.inOut" },
     scrollTrigger: { trigger: "#story", start: "top top", end: "bottom bottom", scrub: 0.8 },
   });
-  // en vh défilés : 0–100 accueil · 100–230 coque · 230–630 vue éclatée (épinglée 230–530) · 630–980 parfums (épinglé 630–880)
+  // en vh défilés : 0–100 accueil · 100–230 coque · 230–530 vue éclatée (épinglée 230–430) · 530–810 parfums (épinglé 530–710)
   tl.to(S, { ...P.coque, duration: 70 }, 20)
-    .to(S, { ...P.intro, duration: 80 }, 150)
-    .to(".xtxt", { opacity: 0, y: -40, duration: 28, ease: "power1.in" }, 262)
-    .to(S, { ...P.xview, duration: 55 }, 262)
-    .to(S, { split: 1, duration: 50 }, 305)
-    .to(S, { layer: 1, duration: 55, ease: "power3.out" }, 338)
-    .to(S, { ...P.orbit, duration: 90, ease: "sine.inOut" }, 392)
-    .to(S, { layer: 0, duration: 40 }, 482)
-    .to(S, { split: 0, duration: 40 }, 498)
-    .to(S, { ...P.flav, duration: 90 }, 530)
-    .to(S, { flavor: 5, duration: 230, ease: "none" }, 640)
-    .to(S, { rotY: P.flav.rotY + Math.PI * 2, duration: 230, ease: "none" }, 640)
-    .to({}, { duration: 10 }, 870);
+    .to(S, { ...P.intro, duration: 70 }, 150)
+    .to(".xtxt", { opacity: 0, y: -40, duration: 25, ease: "power1.in" }, 245)
+    .to(S, { ...P.xview, duration: 45 }, 245)
+    .to(S, { split: 1, duration: 40 }, 280)
+    .to(S, { layer: 1, duration: 45, ease: "power3.out" }, 305)
+    .to(S, { ...P.orbit, duration: 50, ease: "sine.inOut" }, 350)
+    .to(S, { layer: 0, duration: 30 }, 395)
+    .to(S, { split: 0, duration: 30 }, 405)
+    .to(S, { ...P.flav, duration: 80 }, 440)
+    .to(S, { flavor: 5, duration: 160, ease: "none" }, 540)
+    .to(S, { rotY: P.flav.rotY + Math.PI * 2, duration: 160, ease: "none" }, 540)
+    .to({}, { duration: 10 }, 700);
   return () => {};
 });
 
@@ -160,11 +160,12 @@ ScrollTrigger.create({
 });
 
 // --- partie claire : en-tête clair, phrase-manifeste, signatures, barre « ma boîte » ---
-ScrollTrigger.create({ trigger: ".after", start: "top 60px", onToggle: s => document.body.classList.toggle("light", s.isActive) });
+ScrollTrigger.create({ trigger: ".dusk", start: "70% 70px", end: "+=1000000", onToggle: s => document.body.classList.toggle("light", s.isActive) });
+gsap.to(["#stage", "#glow", "#bokeh", "#bgwords"], { opacity: 0, ease: "none", scrollTrigger: { trigger: ".after", start: "top 75%", end: "top 5%", scrub: true } });
 ScrollTrigger.create({ trigger: "#composer", start: "top 70%", end: "bottom 30%", onToggle: s => document.body.classList.toggle("in-composer", s.isActive) });
 {
   const st = $("#statement"), words = split(st);
-  gsap.set(words, { opacity: 0.14 });
+  gsap.set(words, { opacity: 0.22 });
   gsap.to(words, { opacity: 1, stagger: 0.08, ease: "none", scrollTrigger: { trigger: st, start: "top 80%", end: "bottom 45%", scrub: 0.6 } });
 }
 mm.add("(min-width: 861px)", () => {

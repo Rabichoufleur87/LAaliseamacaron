@@ -65,7 +65,7 @@ h2{font:400 clamp(2rem,4.5vw,3.4rem)/1.15 var(--serif);margin:.2em 0 .5em}
 @keyframes drip{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
 .draghint{position:absolute;right:6vw;bottom:34px;margin:0;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;transition:opacity .5s!important}
 .touched .draghint{opacity:0!important}
-.pinwrap{height:350vh;position:relative}
+.pinwrap{height:280vh;position:relative}
 .pin{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:9vh}
 .pin-chap{position:absolute;top:14vh;left:8vw}
 .flavor-info{position:relative;height:110px;width:min(420px,86vw);text-align:center}
@@ -174,7 +174,7 @@ footer{text-align:center;padding:40px 20px 36px;border-top:1px solid var(--line)
 .colines line{stroke:rgba(244,239,227,.8);stroke-width:1}
 .colines circle{fill:#f4efe3;opacity:0;transition:opacity .25s}
 .co{position:absolute;left:0;top:0;opacity:0;text-align:center;white-space:nowrap;font:400 1rem/1.25 var(--serif);color:var(--ivory);text-shadow:0 2px 14px rgba(0,0,0,.7);will-change:transform,opacity}
-.xwrap{height:400vh}
+.xwrap{height:300vh}
 .xpin{flex-direction:row;justify-content:flex-start;align-items:center;padding:0 8vw}
 .xtxt{max-width:430px}
 .xtxt p:not(.chap){color:var(--muted)}
@@ -478,3 +478,44 @@ body.in-composer .orderbar{transform:translate(-50%,140%);opacity:0}
 body.hasbox:not(.in-composer) #toTop{bottom:calc(92px + env(safe-area-inset-bottom, 0px))}
 .after footer{padding-bottom:120px}
 #toTop{transition:opacity .3s,transform .4s var(--ease),color .3s,bottom .5s var(--ease)}
+
+/* ===================== lisibilité et transition ===================== */
+/* fondu de la nuit violette vers le blanc, sans panneau qui surgit */
+/* le haut de la partie claire est transparent puis s'éclaircit : on voit la scène se dissoudre dans le blanc */
+.after{border-radius:0;box-shadow:none;
+  background:linear-gradient(180deg,rgba(251,249,245,0) 0,rgba(214,203,230,.45) 22vh,rgba(244,240,246,.9) 40vh,#fbf9f5 55vh) top/100% 55vh no-repeat,
+             linear-gradient(#fbf9f5,#fbf9f5) 0 55vh/100% 100% no-repeat}
+.dusk{height:55vh}
+.after .marquee{padding-top:30px}
+.dusk{margin-bottom:-1px}
+
+/* textes plus lisibles : graisse normale, tailles et contrastes relevés */
+body{font-weight:400}
+.lead,.panel p,.sub,.card p,.flavor small,.sig-card p,.story-txt,.faq p{font-weight:400}
+.lead{font-size:1.12rem;line-height:1.7}
+:root{--muted:#cbbfe3}
+.panel p,.xtxt p:not(.chap){color:#d6cdea}
+.kicker,.chap{font-size:.78rem;font-weight:500;color:#a9d37a}
+nav a{font-size:.8rem;font-weight:500;color:#d9d0ec}
+.draghint,.scrollhint,.xhint{font-size:.74rem;color:#d6cdea}
+.fi span{color:#d6cdea}
+.after{--muted:#5d5172;--green-l:#4f7a28;--grn-d:#4f7a28;--line:rgba(36,16,63,.16)}
+.kick{font-size:.78rem;font-weight:600;color:var(--grn-d)}
+.after .sub,.after .card p,.after .sig-card p,.after .story-txt,.after .faq p,.after .item small{color:var(--muted)}
+.after .flavor small{color:#6a5d80}
+.after .chip,.after .tab{font-weight:500;color:#24103f;border-color:rgba(36,16,63,.25)}
+.after .tab.on,.after .chip.on{color:#fff}
+.after .sbox{border-color:rgba(36,16,63,.22)}
+.after .sbox input::placeholder{color:#7a6e8f;opacity:1}
+.after .qty button:disabled{opacity:.3}
+.after .item{box-shadow:0 0 0 1px rgba(36,16,63,.1)}
+.after .card,.after .flavor,.sig-card{box-shadow:0 0 0 1px rgba(36,16,63,.07),0 26px 50px -34px rgba(36,16,63,.4)}
+.statement{color:#24103f}
+body.light nav a{color:#4a3d61}
+body.light #cursor{border-color:#5b2d91}
+body.light #cursor.big{background:rgba(91,45,145,.12)}
+.after footer{color:#ddd3ee}
+.after footer p{font-size:.92rem}
+.btn{font-size:.78rem;font-weight:500}
+.btn.small{font-size:.7rem}
+
