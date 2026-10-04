@@ -519,3 +519,8 @@ body.light #cursor.big{background:rgba(91,45,145,.12)}
 .btn{font-size:.78rem;font-weight:500}
 .btn.small{font-size:.7rem}
 
+/* texte blanc sur les boutons violets (le style des liens ne doit pas s'appliquer aux boutons) */
+.after a.btn,.after .btn{color:#fff}
+.after .btn.ghost{color:var(--vio)}
+.after .btn:hover{color:#fff}
+.after .btn.ghost:hover{color:var(--ink)}
