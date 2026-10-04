@@ -189,6 +189,15 @@ export function initUI() {
     `<tr class="${d === today ? "today" : ""}"><td>${DAYS[d]}</td><td>${d === 0 || d === 1 ? "Fermé" : "10h – 19h"}</td></tr>`).join("");
   $("#openNow").textContent = today > 1 && h >= 10 && h < 19 ? "● Ouvert actuellement" : "● Fermé actuellement";
 
+  // le film : grand bouton de lecture, puis commandes natives ; bouton « revoir » à la fin
+  const vid = $("#filmVideo"), player = $("#player");
+  $("#playBtn").addEventListener("click", () => {
+    vid.controls = true; player.classList.add("playing");
+    vid.currentTime = vid.ended ? 0 : vid.currentTime;
+    vid.play().catch(() => {});
+  });
+  vid.addEventListener("ended", () => { player.classList.remove("playing"); vid.controls = false; $("#playLabel").textContent = "Revoir le film"; });
+
   $("#burger").onclick = () => { const o = $("#nav").classList.toggle("open"); $("#burger").setAttribute("aria-expanded", o); };
   $("#nav").addEventListener("click", e => { if (e.target.tagName === "A") $("#nav").classList.remove("open"); });
   $("#year").textContent = new Date().getFullYear();

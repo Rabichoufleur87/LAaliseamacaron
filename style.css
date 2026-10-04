@@ -524,3 +524,27 @@ body.light #cursor.big{background:rgba(91,45,145,.12)}
 .after .btn.ghost{color:var(--vio)}
 .after .btn:hover{color:#fff}
 .after .btn.ghost:hover{color:var(--ink)}
+
+/* ===================== le film ===================== */
+.film{text-align:center;padding-top:40px!important}
+.film-head .kick{justify-content:center}
+.film-title{font:400 clamp(2rem,4.4vw,3.4rem)/1.1 var(--serif)!important;margin:0 0 40px!important}
+.film-title::after{display:none!important}
+.film-title em{color:var(--vio)}
+.player{position:relative;max-width:1000px;margin:0 auto;aspect-ratio:16/9;overflow:hidden;border-radius:18px;background:#150829;
+  box-shadow:0 50px 90px -40px rgba(36,16,63,.7),0 0 0 1px rgba(36,16,63,.08)}
+.player video{display:block;width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease),filter .8s}
+.player:not(.playing) video{filter:brightness(.82)}
+.player:not(.playing):hover video{transform:scale(1.03)}
+.play{position:absolute;left:50%;top:50%;width:96px;height:96px;margin:-48px 0 0 -48px;border-radius:50%;border:0;cursor:pointer;
+  background:rgba(251,249,245,.92);display:grid;place-items:center;transition:transform .5s var(--ease),background .4s,opacity .4s;z-index:2}
+.play svg{width:34px;height:34px;fill:#5b2d91;margin-left:5px;transition:fill .4s}
+.play-ring{position:absolute;inset:-12px;border-radius:50%;border:1px solid rgba(251,249,245,.7);animation:ring 2.4s var(--ease) infinite}
+@keyframes ring{0%{transform:scale(.85);opacity:1}100%{transform:scale(1.35);opacity:0}}
+.play:hover{transform:scale(1.1);background:#8db860}
+.play:hover svg{fill:#24103f}
+.play-label{position:absolute;left:0;right:0;bottom:26px;color:#fff;font:500 .78rem var(--sans);letter-spacing:.24em;text-transform:uppercase;text-shadow:0 2px 10px rgba(0,0,0,.6);transition:opacity .4s;z-index:2}
+.player.playing .play,.player.playing .play-label{opacity:0;pointer-events:none;transform:scale(.8)}
+.film-credit{margin-top:18px;font-size:.8rem;color:var(--muted)}
+@media (max-width:860px){.player{border-radius:12px}.play{width:72px;height:72px;margin:-36px 0 0 -36px}.play svg{width:26px;height:26px}.play-label{bottom:14px;font-size:.66rem}}
+@media (prefers-reduced-motion:reduce){.play-ring{animation:none}}

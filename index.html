@@ -20,6 +20,7 @@
   <button class="burger" id="burger" aria-label="Menu" aria-expanded="false">☰</button>
   <nav id="nav">
     <a href="#parfums">Les parfums</a>
+    <a href="#film">Le film</a>
     <a href="#boites">Nos boîtes</a>
     <a href="#composer">Composer</a>
     <a href="#presentoirs">Présentoirs</a>
@@ -105,6 +106,19 @@
   <section id="univers" class="univers">
     <p class="kick rv">L'univers</p>
     <p class="statement" id="statement">Chaque macaron est un petit voyage. <em>38 parfums</em>, de la rose au foie gras, du citron vert au chocolat d'origine, imaginés et façonnés à la main, <em>place de la Motte</em>, depuis 2013.</p>
+  </section>
+
+  <section id="film" class="film">
+    <div class="film-head rv">
+      <p class="kick">Le film</p>
+      <h2 class="film-title">La Valise à Macarons <em>en 30 secondes.</em></h2>
+    </div>
+    <div class="player rv" id="player">
+      <video id="filmVideo" poster="img/film-affiche.webp" playsinline preload="none" width="1280" height="720"><source src="video/la-valise-web.mp4" type='video/mp4; codecs="avc1.640028, mp4a.40.2"'><source src="video/la-valise-web.webm" type='video/webm; codecs="vp9, opus"'></video>
+      <button class="play" id="playBtn" type="button" aria-label="Lancer le film"><span class="play-ring"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></button>
+      <span class="play-label" id="playLabel">Lancer le film · avec le son</span>
+    </div>
+    <p class="film-credit rv">Musique originale · Piano : Salamander Grand Piano, Alexander Holm (CC BY 3.0)</p>
   </section>
 
   <section id="signatures" class="sig">
