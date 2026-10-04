@@ -1,6 +1,6 @@
 # Pièce originale pour piano seul, tranquille, dans l'esprit d'un andante classique
-# (do majeur, 3/4, 72 à la noire : 12 mesures = 30 s), synthétisée note par note : libre de droits.
-# Timbre volontairement doux : peu d'harmoniques, aigus filtrés, pas de bruit de marteau, aucune note très haute.
+# (do majeur, 3/4, 72 à la noire : 12 mesures = 30 s). Composition originale ; échantillons CC BY 3.0.
+# Vrai piano (Salamander Grand Piano), aucun autre son ni effet ; la mélodie est au premier plan.
 import numpy as np, wave
 from scipy.signal import butter, sosfilt, fftconvolve
 
@@ -12,19 +12,23 @@ rng = np.random.default_rng(5)
 midi = lambda m: 440 * 2 ** ((m - 69) / 12)
 lp = lambda x, f: sosfilt(butter(2, f, "low", fs=SR, output="sos"), x)
 
+# vrai piano : échantillons du Salamander Grand Piano (CC BY 3.0, Alexander Holm), transposés d'au plus un ton
+import subprocess, glob, os, re
+NAMES = {"C": 0, "Ds": 3, "Fs": 6, "A": 9}
+SAMPLES = {}
+for f in glob.glob(os.path.join(os.path.dirname(__file__), "piano", "*.mp3")):
+    nm, octv = re.match(r"([A-Z]s?)(\d)", os.path.basename(f)).groups()
+    raw = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", f, "-f", "f32le", "-ac", "1", "-ar", str(SR), "-"], capture_output=True).stdout
+    SAMPLES[12 * (int(octv) + 1) + NAMES[nm]] = np.frombuffer(raw, np.float32)
+
 def piano(m, dur, vel):
-    f0 = midi(m)
-    t = np.arange(int((dur + 1.2) * SR)) / SR
-    tau = np.clip(3.2 * (262 / f0) ** 0.5, 1.2, 5.0)
-    s = np.zeros_like(t)
-    for k in range(1, 7):
-        fk = k * f0 * np.sqrt(1 + 0.0003 * k * k)
-        a = 1 / k ** 1.7
-        tk = tau / (1 + 0.5 * (k - 1))
-        s += a * (0.6 * np.exp(-t / (tk * 0.3)) + 0.4 * np.exp(-t / tk)) * np.sin(2 * np.pi * fk * t)
-    s *= np.minimum(t / 0.006, 1)                                  # attaque douce, sans clic
-    s *= np.where(t > dur, np.exp(-(t - dur) / 0.35), 1)           # relâché lent, comme avec la pédale
-    return s * vel * 0.2
+    ms = min(SAMPLES, key=lambda k: abs(k - m))
+    src, ratio = SAMPLES[ms], 2 ** ((m - ms) / 12)
+    L = int(min(len(src) / ratio, (dur + 1.0) * SR))
+    s = np.interp(np.arange(L) * ratio, np.arange(len(src)), src)
+    t = np.arange(L) / SR
+    s *= np.where(t > dur, np.exp(-(t - dur) / 0.3), 1)           # l'étouffoir retombe doucement
+    return s * vel
 
 def play(m, start, dur, vel, pan):
     i = int(start * SR)
@@ -61,24 +65,17 @@ for b in range(12):
     t0 = b * 3 * BEAT
     for beat, d, m in MEL[b]:
         tt = t0 + beat * BEAT
-        play(m, tt, d * BEAT, vel_at(tt) * rng.uniform(.96, 1.02), 0.12)
+        play(m, tt, d * BEAT, 1.6 * vel_at(tt) * rng.uniform(.96, 1.02), 0.08)
     lo, fifth, third = CH[b]
     if b == 11:                                                    # accord final, posé et tenu
         for k, m in enumerate((lo, fifth, third, n(G, 3))):
-            play(m, t0 + k * 0.12, 4.0, vel_at(t0) * 0.6, -0.15)
+            play(m, t0 + k * 0.12, 4.0, vel_at(t0) * 0.7, -0.1)
         continue
     for k, m in enumerate((lo, fifth, third, fifth, third, fifth)):
         tt = t0 + k * BEAT / 2
-        play(m, tt, 3 * BEAT - k * BEAT / 2, vel_at(tt) * (0.42 if k == 0 else 0.3), -0.15)
+        play(m, tt, 3 * BEAT - k * BEAT / 2, vel_at(tt) * (0.5 if k == 0 else 0.34), -0.1)
 
-# légère acoustique de pièce, filtrée pour rester feutrée
-ti = np.arange(int(1.8 * SR)) / SR
-ir = rng.standard_normal((2, len(ti))) * np.exp(-ti / 0.45)
-ir = np.stack([lp(ir[0], 2500), lp(ir[1], 2500)])
-ir /= np.sqrt((ir ** 2).sum(axis=1, keepdims=True)) * 4
-wet = np.stack([fftconvolve(out[0], ir[0])[:N], fftconvolve(out[1], ir[1])[:N]])
-mix = out + 0.4 * wet
-mix = np.stack([lp(mix[0], 3200), lp(mix[1], 3200)])             # coupe les aigus : rien de perçant
+mix = out
 time = np.arange(N) / SR
 mix *= np.clip(time / 0.1, 0, 1) * np.clip((DUR - time) / 1.8, 0, 1)
 mix /= np.abs(mix).max() / 0.85
