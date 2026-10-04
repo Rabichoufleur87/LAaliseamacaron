@@ -1,111 +1,110 @@
-# Musique lo-fi originale pour la vidéo (30 s, 80 BPM), générée par synthèse : libre de droits.
-# Calée sur les scènes : intro feutrée (0-3 s), la batterie entre avec le macaron (3 s),
-# clochettes sur les parfums (13 s), montée puis ouverture sur le passage au blanc (18 s), fin apaisée.
+# Pièce originale pour piano « dans le style de Mozart » (do majeur, 120 à la noire, 15 mesures = 30 s),
+# synthétisée note par note : libre de droits.
+# Mélodie chantante à la main droite, basse d'Alberti à la main gauche, gammes, trille final.
+# Calage : thème piano (0 s) · reprise ornée pendant la vue éclatée (8 s) · la mineur sur les parfums (16 s)
+# · éclat en fa majeur au passage au blanc (18 s) · cadence finale et accord tenu (26-30 s).
 import numpy as np, wave
 from scipy.signal import butter, sosfilt, fftconvolve
 
-SR, DUR, BPM = 44100, 30.0, 80
-BEAT = 60 / BPM          # 0,75 s
-BAR = 4 * BEAT           # 3 s
+SR, DUR, BPM = 44100, 30.0, 120
+Q = 60 / BPM            # noire = 0,5 s ; mesure = 2 s
 N = int(SR * DUR)
-rng = np.random.default_rng(7)
-L, R = np.zeros(N), np.zeros(N)
-stems = {k: np.zeros((2, N)) for k in ("ep", "bass", "drums", "bells", "fx")}
-
+out = np.zeros((2, N))
+rng = np.random.default_rng(3)
 midi = lambda m: 440 * 2 ** ((m - 69) / 12)
-def add(stem, start, sig, pan=0.0, gain=1.0):
+lp = lambda x, f: sosfilt(butter(2, f, "low", fs=SR, output="sos"), x)
+
+# ---------- piano : partiels légèrement inharmoniques, deux cordes, marteau, étouffoir ----------
+def piano(m, dur, vel):
+    f0 = midi(m)
+    ring = dur + 0.35
+    t = np.arange(int(ring * SR)) / SR
+    tau = np.clip(2.6 * (262 / f0) ** 0.6, 0.35, 4.0)
+    s = np.zeros_like(t)
+    for k in range(1, 11):
+        fk = k * f0 * np.sqrt(1 + 0.0004 * k * k)
+        if fk > 16000: break
+        a = (1 / k ** 1.25) * (0.55 + 0.45 * vel) ** (k * 0.35)
+        tk = tau / (1 + 0.35 * (k - 1))
+        env = 0.65 * np.exp(-t / (tk * 0.22)) + 0.35 * np.exp(-t / tk)
+        for d in (-0.00035, 0.00035):                       # deux cordes à peine désaccordées
+            s += 0.5 * a * env * np.sin(2 * np.pi * fk * (1 + d) * t + rng.uniform(0, 6.28))
+    s *= np.minimum(t / 0.002, 1)
+    hammer = lp(rng.standard_normal(len(t)), 3000 + 2000 * vel) * np.exp(-t / 0.012) * 0.08
+    s += hammer
+    s *= np.where(t > dur, np.exp(-(t - dur) / 0.11), 1)    # l'étouffoir retombe à la fin de la note
+    return s * vel * 0.22
+
+def play(m, start, dur, vel, pan):
     i = int(start * SR)
     if i >= N: return
-    sig = sig[: N - i] * gain
-    stems[stem][0, i:i + len(sig)] += sig * np.sqrt(0.5 * (1 - pan))
-    stems[stem][1, i:i + len(sig)] += sig * np.sqrt(0.5 * (1 + pan))
-def tt(d): return np.arange(int(d * SR)) / SR
-def lp(x, f): return sosfilt(butter(2, f, "low", fs=SR, output="sos"), x)
-def hp(x, f): return sosfilt(butter(2, f, "high", fs=SR, output="sos"), x)
-def bp(x, lo, hi): return sosfilt(butter(2, [lo, hi], "band", fs=SR, output="sos"), x)
+    s = piano(m, dur, vel)[: N - i]
+    out[0, i:i + len(s)] += s * np.sqrt(0.5 * (1 - pan))
+    out[1, i:i + len(s)] += s * np.sqrt(0.5 * (1 + pan))
 
-# piano électrique doux (type Rhodes)
-def ep(m, d=2.6, vel=1.0, det=0.0):
-    t, f = tt(d), midi(m) * (1 + det)
-    env = np.minimum(t / 0.008, 1) * np.exp(-t / 1.5)
-    s = sum(a * np.sin(2 * np.pi * k * f * t) * np.exp(-t * k * 0.6) for k, a in ((1, 1), (2, 0.32), (3, 0.1), (4, 0.04)))
-    s += 0.06 * np.sin(2 * np.pi * 7.1 * f * t) * np.exp(-t * 18)          # petit « tine » d'attaque
-    return s * env * (1 + 0.12 * np.sin(2 * np.pi * 4.4 * t)) * vel * 0.16
+C, D, E, F, G, A, B = 0, 2, 4, 5, 7, 9, 11
+n = lambda name, octv: 12 * (octv + 1) + name           # n(C,5) = 72
 
-CHORDS = [([53, 57, 60, 64], 41), ([52, 55, 59, 62], 40), ([50, 53, 57, 60, 64], 38), ([48, 52, 55, 59, 62], 36)]  # Fmaj7 Em7 Dm9 Cmaj9
-NBARS = int(DUR / BAR)
-for b in range(NBARS):
-    notes, root = CHORDS[b % 4]
-    t0 = b * BAR
-    for j, m in enumerate(notes):                                  # accord égrené sur le temps 1
-        add("ep", t0 + j * 0.012, ep(m, 2.8, 1.0, -0.0015), pan=-0.35)
-        add("ep", t0 + j * 0.012 + 0.004, ep(m, 2.8, 0.9, 0.0015), pan=0.35)
-    if b < NBARS - 1:                                              # relance douce à contretemps
-        for j, m in enumerate(notes[1:]):
-            add("ep", t0 + 2.5 * BEAT + 0.1 + j * 0.01, ep(m + 12 if j == len(notes) - 2 else m, 1.2, 0.45), pan=0.15)
-    # basse ronde
-    if 1 <= b < NBARS - 1 or b == NBARS - 1:
-        for beat, d in ((0, 1.9), (2.5, 0.9)):
-            t = tt(d); f = midi(root)
-            s = (np.sin(2 * np.pi * f * t) + 0.25 * np.sin(4 * np.pi * f * t)) * np.minimum(t / 0.01, 1) * np.exp(-t / 0.9)
-            add("bass", t0 + beat * BEAT, lp(s, 400), gain=0.42 if b >= 1 else 0.0)
+# ---------- main droite : (temps dans la mesure, durée en noires, note) ----------
+RH = {
+    0:  [(0, 1, n(E, 5)), (1, 1, n(G, 5)), (2, 1.5, n(C, 6)), (3.5, .5, n(B, 5))],
+    1:  [(0, 1.5, n(D, 6)), (1.5, .5, n(C, 6)), (2, 1, n(B, 5)), (3, 1, n(G, 5))],
+    2:  [(0, .5, n(A, 5)), (.5, .5, n(G, 5)), (1, .5, n(F, 5)), (1.5, .5, n(E, 5)), (2, 1, n(D, 5)), (3, 1, n(G, 5))],
+    3:  [(0, .5, n(B, 4)), (.5, .5, n(C, 5)), (1, .5, n(D, 5)), (1.5, .5, n(E, 5)), (2, 2, n(D, 5))],
+    4:  [(0, 1, n(E, 5)), (1, 1, n(G, 5)), (2, .25, n(D, 6)), (2.25, 1.25, n(C, 6)), (3.5, .5, n(E, 6))],
+    5:  [(0, 1.5, n(F, 6)), (1.5, .5, n(D, 6)), (2, 1, n(B, 5)), (3, .5, n(G, 5)), (3.5, .5, n(A, 5))],
+    6:  [(0, .5, n(G, 5)), (.5, .5, n(E, 5)), (1, .5, n(F, 5)), (1.5, .5, n(D, 5)), (2, 1, n(E, 5)), (3, 1, n(D, 5))],
+    7:  [(0, 2, n(C, 5))] + [(2 + k * .25, .25, n(x, o)) for k, (x, o) in enumerate(((C, 5), (D, 5), (E, 5), (F, 5), (G, 5), (A, 5), (B, 5), (C, 6)))],
+    8:  [(0, .5, n(A, 5)), (.5, .5, n(G, 5) + 1), (1, .5, n(A, 5)), (1.5, .5, n(C, 6)), (2, 1, n(E, 6)), (3, 1, n(A, 5))],
+    9:  [(k * .25, .25, n(x, o)) for k, (x, o) in enumerate(((C, 7), (B, 6), (A, 6), (G, 6), (F, 6), (E, 6), (D, 6), (C, 6)))] + [(2, 1, n(F, 6)), (3, 1, n(A, 6))],
+    10: [(0, 1, n(D, 6)), (1, .5, n(C, 6)), (1.5, .5, n(B, 5)), (2, 1, n(A, 5)), (3, 1, n(F, 5) + 1)],
+    11: [(0, .5, n(G, 5)), (.5, .5, n(A, 5)), (1, .5, n(B, 5)), (1.5, .5, n(C, 6)), (2, 2, n(D, 6))],
+    12: [(0, 1, n(F, 6)), (1, 1, n(D, 6)), (2, 1, n(B, 5)), (3, 1, n(G, 5))],
+    13: [(0, 1, n(E, 6)), (1, 1, n(C, 6))] + [(2 + k * .125, .125, n(D, 6) if k % 2 == 0 else n(E, 6)) for k in range(14)] + [(3.75, .25, n(D, 6))],
+    14: [(0, 4, n(C, 6)), (0.03, 4, n(E, 5)), (0.06, 4, n(G, 5))],
+}
+# ---------- main gauche : basse d'Alberti (bas, haut, milieu, haut) en croches ----------
+ALB = {"C": (n(C, 4), n(G, 4), n(E, 4)), "G7": (n(B, 3), n(F, 4), n(D, 4)), "G": (n(B, 3), n(G, 4), n(D, 4)),
+       "Am": (n(A, 3), n(E, 4), n(C, 4)), "F": (n(A, 3), n(F, 4), n(C, 4)), "D7": (n(F, 3) + 1, n(D, 4), n(C, 4)),
+       "C64": (n(G, 3), n(E, 4), n(C, 4))}
+LH = ["C", "G7", "C", "G", "C", "G7", ("C64", "G7"), "C", "Am", "F", "D7", "G", "G7", ("C64", "G7"), None]
 
-# batterie (swing léger), de la mesure 2 (3 s) à 27 s
-def kick():
-    t = tt(0.45); f = 45 + 75 * np.exp(-t / 0.03)
-    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / 0.16)
-def snare():
-    t = tt(0.3)
-    return (bp(rng.standard_normal(len(t)), 1200, 5000) * 0.5 + np.sin(2 * np.pi * 185 * t) * 0.6) * np.exp(-t / 0.08)
-def hat(o=False):
-    t = tt(0.25 if o else 0.06)
-    return hp(rng.standard_normal(len(t)), 7000) * np.exp(-t / (0.08 if o else 0.018))
-SW = 0.11 * BEAT
-for b in range(1, NBARS):
-    t0 = b * BAR
-    if t0 >= 27: break
-    for beat in (0, 1.75 + 0.0, 2.5):
-        add("drums", t0 + beat * BEAT + (SW if beat % 1 else 0), kick(), gain=0.55)
-    for beat in (1, 3):
-        add("drums", t0 + beat * BEAT + 0.02, snare(), pan=0.05, gain=0.22)
+def vel_at(t):        # nuances : p au début, mf, crescendo vers le passage au blanc, f, puis p à la fin
+    pts = [(0, .5), (3, .62), (8, .7), (15, .7), (17.8, .85), (18, 1.0), (22, .85), (26, .8), (30, .6)]
+    return float(np.interp(t, *zip(*pts)))
+
+for b in range(15):
+    t0 = b * 4 * Q
+    for beat, d, m in RH.get(b, []):
+        tt = t0 + beat * Q
+        v = vel_at(tt) * (1.0 if d >= 0.5 else 0.82) * rng.uniform(0.94, 1.03)
+        play(m, tt + rng.uniform(0, 0.008), d * Q * 0.95, v, 0.18)
+    ch = LH[b]
+    if ch is None:                                     # accord final arpégé et tenu
+        for k, m in enumerate((n(C, 2), n(G, 2), n(C, 3), n(E, 3), n(G, 3))):
+            play(m, t0 + k * 0.07, 3.6, vel_at(t0) * 0.85, -0.2)
+        continue
     for k in range(8):
-        add("drums", t0 + k * BEAT / 2 + (SW if k % 2 else 0), hat(k == 7), pan=0.3, gain=(0.09 if k % 2 else 0.13))
+        name = ch if isinstance(ch, str) else ch[k // 4]
+        lo, hi, mid = ALB[name]
+        m = (lo, hi, mid, hi)[k % 4]
+        tt = t0 + k * Q / 2
+        play(m, tt, Q / 2 * 1.6, vel_at(tt) * (0.48 if k % 4 == 0 else 0.38), -0.22)
+    if b in (7, 13):                                   # basse grave aux cadences
+        play(n(C, 3) if b == 7 else n(G, 2), t0 + (0 if b == 7 else 2 * Q), 2 * Q, vel_at(t0) * 0.6, -0.25)
 
-# clochettes : petite mélodie pentatonique pendant les parfums et la mosaïque (13 s → 26 s)
-def bell(m, d=2.2):
-    t, f = tt(d), midi(m)
-    return (np.sin(2 * np.pi * f * t) + 0.25 * np.sin(2 * np.pi * 3.01 * f * t) * np.exp(-t * 4)) * np.minimum(t / 0.003, 1) * np.exp(-t / 0.6) * 0.11
-MEL = [(0, 76), (0.75, 79), (1.5, 81), (2.25, 79), (3.0, 76), (4.5, 74), (5.25, 72), (6.0, 74), (6.75, 76), (7.5, 79), (9.0, 81), (9.75, 84), (10.5, 81), (11.25, 79)]
-for start in (13.5, 19.5):
-    for dt, m in MEL:
-        if start + dt < 26:
-            add("bells", start + dt, bell(m), pan=0.4 * np.sin(dt), gain=1.0)
-            add("bells", start + dt + 0.375, bell(m), pan=-0.4 * np.sin(dt), gain=0.32)   # écho
-
-# montée de bruit avant le passage au blanc, puis un souffle grave à 18 s
-t = tt(1.0)
-add("fx", 17.0, bp(rng.standard_normal(len(t)), 600, 6000) * (t / 1.0) ** 2 * 0.12)
-t = tt(1.6)
-add("fx", 18.0, np.sin(2 * np.pi * (40 + 30 * np.exp(-t / 0.05)) * t) * np.exp(-t / 0.5) * 0.4)
-# crépitement de vinyle et souffle, du début à la fin
-crack = np.zeros(N); idx = rng.integers(0, N, 900); crack[idx] = rng.uniform(-1, 1, 900) * rng.uniform(0.2, 1, 900)
-hiss = lp(hp(rng.standard_normal(N), 1500), 6000) * 0.006
-for ch in (0, 1): stems["fx"][ch] += lp(hp(crack, 1500), 7000) * 0.02 + hiss
-
-# réverbération (réponse impulsionnelle synthétique)
-ir_t = tt(1.8); ir = rng.standard_normal(len(ir_t)) * np.exp(-ir_t / 0.45); ir = lp(ir, 5000); ir /= np.abs(ir).sum() ** 0.5 * 10
-def verb(x, wet): return x + wet * np.stack([fftconvolve(x[0], ir)[:N], fftconvolve(x[1], ir[::-1])[:N]])
-
-# filtre « feutré » au début et à la fin : on ouvre à 3 s, on referme après 26 s
+# ---------- salle de concert : réverbération douce ----------
+ti = np.arange(int(2.6 * SR)) / SR
+ir = rng.standard_normal((2, len(ti))) * np.exp(-ti / 0.7)
+ir = np.stack([lp(ir[0], 4500), lp(ir[1], 4500)])
+ir /= np.sqrt((ir ** 2).sum(axis=1, keepdims=True)) * 3.2
+wet = np.stack([fftconvolve(out[0], ir[0])[:N], fftconvolve(out[1], ir[1])[:N]])
+mix = out + 0.55 * wet
 time = np.arange(N) / SR
-k = np.clip((time - 2.6) / 0.6, 0, 1) * np.clip((28.5 - time) / 2.5, 0, 1)
-def muffle(x): return np.stack([lp(x[0], 900), lp(x[1], 900)]) * (1 - k) + x * k
-
-mix = muffle(verb(stems["ep"], 0.35)) + stems["bass"] + muffle(verb(stems["drums"], 0.08)) + verb(stems["bells"], 0.5) + stems["fx"]
-mix = np.tanh(mix * 1.6) / 1.6                                      # compression douce
-mix *= np.clip(time / 0.3, 0, 1) * np.clip((DUR - time) / 1.4, 0, 1)
-mix /= np.abs(mix).max() / 0.89                                    # crête à -1 dB
-pcm = (mix.T * 32767).astype("<i2")
+mix *= np.clip(time / 0.05, 0, 1) * np.clip((DUR - time) / 1.2, 0, 1)
+mix = np.tanh(mix * 1.2) / 1.2
+mix /= np.abs(mix).max() / 0.89
 with wave.open("video/musique.wav", "wb") as w:
-    w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR); w.writeframes(pcm.tobytes())
-print("ok", mix.shape)
+    w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR)
+    w.writeframes((mix.T * 32767).astype("<i2").tobytes())
+print("ok")
