@@ -3,6 +3,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import { createMacaron } from "./macaron.js";
 import { initUI } from "./ui.js";
+import { initFx } from "./fx.js";
 
 gsap.registerPlugin(ScrollTrigger);
 const $ = s => document.querySelector(s);
@@ -16,6 +17,7 @@ if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 scrollTo(0, 0);
 
 initUI();
+initFx();
 
 // --- découpe du texte en mots pour les révélations ---
 function split(el) {

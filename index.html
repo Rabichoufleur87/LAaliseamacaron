@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>La Valise à Macarons — Macarons à composer à Limoges</title>
 <meta name="description" content="La Valise à Macarons, pâtisserie artisanale place de la Motte à Limoges (87) : macarons sucrés et salés à composer, boîtes de 8 à 24, présentoirs et chocolats.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..600&family=Jost:wght@300..600&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -116,12 +119,30 @@
 
   <section id="macarons">
     <h2 class="rv" data-split>Nos macarons</h2>
+    <p class="sub rv">38 parfums, sucrés et salés. Cherchez par nom ou par envie.</p>
+    <div class="search rv">
+      <label class="sbox" for="q">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+        <input id="q" type="search" placeholder="Chocolat, figue, citron, fromage…" autocomplete="off" aria-label="Rechercher un parfum">
+        <span class="qcount" id="qcount" aria-live="polite"></span>
+        <button class="qclear" id="qclear" type="button" aria-label="Effacer la recherche" hidden>×</button>
+      </label>
+      <div class="chips">
+        <button class="chip" type="button" data-q="chocolat">Chocolat</button>
+        <button class="chip" type="button" data-q="fruits">Fruits</button>
+        <button class="chip" type="button" data-q="fruits secs">Fruits secs</button>
+        <button class="chip" type="button" data-q="gourmand">Gourmands</button>
+        <button class="chip" type="button" data-q="fromages">Fromages</button>
+        <button class="chip" type="button" data-q="apéritif">Apéritif</button>
+      </div>
+    </div>
     <div class="tabs rv" role="tablist">
       <button class="tab on" data-f="all">Tous</button>
       <button class="tab" data-f="sucré">Sucrés · 1,20 €</button>
       <button class="tab" data-f="salé">Salés · 1,30 €</button>
     </div>
     <div class="flavors" id="flavors"></div>
+    <p class="noresult" id="noresult" hidden>Aucun parfum ne correspond à « <span id="noq"></span> ». Essayez « chocolat », « fruits » ou « fromages ».</p>
     <p class="sub rv">La carte évolue avec les saisons : demandez les créations du moment en boutique.</p>
   </section>
 
@@ -131,6 +152,10 @@
       <div class="size-pick" id="sizePick"></div>
       <div class="meter"><div id="bar"></div></div>
       <p class="meter-txt"><strong id="count">0</strong> / <span id="max">12</span> macarons · <span id="left"></span></p>
+      <label class="sbox small" for="bq">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+        <input id="bq" type="search" placeholder="Trouver un parfum à ajouter…" autocomplete="off" aria-label="Filtrer les parfums du composeur">
+      </label>
       <div class="builder" id="builder"></div>
       <div class="recap">
         <p>Total : <strong id="total">0,00 €</strong></p>
@@ -195,7 +220,8 @@
   </footer>
 </div>
 </main>
-<a href="#accueil" id="toTop" aria-label="Haut de page">↑</a>
+<a href="#accueil" id="toTop" aria-label="Haut de page"><span>↑</span></a>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="site.min.js"></script>
 </body>
 </html>

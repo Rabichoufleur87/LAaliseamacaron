@@ -1,9 +1,9 @@
-:root{--night:#150829;--night2:#1f0d3d;--violet:#5b2d91;--violet-l:#a77bdc;--green:#8db860;--green-l:#c4e09a;--ivory:#f4efe3;--muted:#b9aad3;--line:rgba(141,184,96,.35);--glow:#8a6446;--serif:"Didot","Bodoni MT","Playfair Display","Cormorant Garamond",Georgia,serif}
+:root{--night:#150829;--night2:#1f0d3d;--violet:#5b2d91;--violet-l:#a77bdc;--green:#8db860;--green-l:#c4e09a;--ivory:#f4efe3;--muted:#b9aad3;--line:rgba(141,184,96,.35);--glow:#8a6446;--serif:"Bodoni Moda","Didot","Bodoni MT","Playfair Display",Georgia,serif;--sans:"Jost","Futura","Avenir Next","Segoe UI",system-ui,sans-serif;--ease:cubic-bezier(.2,.7,.2,1);--ease2:cubic-bezier(.7,0,.2,1)}
 *{box-sizing:border-box}
 html{scroll-padding-top:80px}
 html.lenis,html.lenis body{height:auto}
 .lenis.lenis-smooth{scroll-behavior:auto!important}
-body{margin:0;font-family:Georgia,serif;background:var(--night);color:var(--ivory);line-height:1.7;overflow-x:hidden}
+body{margin:0;font-family:var(--sans);font-weight:300;background:var(--night);color:var(--ivory);line-height:1.7;overflow-x:hidden}
 a{color:var(--green-l)}
 ::selection{background:var(--green);color:var(--night)}
 
@@ -208,3 +208,134 @@ footer{text-align:center;padding:40px 20px 36px;border-top:1px solid var(--line)
 .ph figcaption{position:absolute;left:0;right:0;bottom:0;padding:28px 14px 12px;font:italic 1.1rem var(--serif);background:linear-gradient(0deg,rgba(21,8,41,.85),transparent)}
 .footlogo{display:block;width:150px;height:auto;margin:0 auto 26px}
 @media (max-width:860px){.gallery{grid-template-columns:1fr 1fr}.ph.tall{grid-row:span 1}.ph.tall img{aspect-ratio:3/4}.logo img{height:28px}.flavors{grid-template-columns:1fr 1fr}}
+
+/* ===================== finitions premium ===================== */
+h1,h2,h3,.fi strong,.bgw{text-wrap:balance}
+h1{font-weight:400;letter-spacing:-.01em}
+h2{font-weight:400;letter-spacing:-.005em}
+.lead,.panel p,.sub{font-weight:300}
+:focus-visible{outline:1px solid var(--green-l);outline-offset:4px}
+/* grain photographique très léger sur toute la page */
+body::after{content:"";position:fixed;inset:0;z-index:45;pointer-events:none;opacity:.07;mix-blend-mode:overlay;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* --- étiquette qui roule (commune à tous les boutons) --- */
+.bt{display:block;position:relative;overflow:hidden;line-height:1.35}
+.bt>span{display:block;transition:transform .55s var(--ease2)}
+.bt::after{content:attr(data-t);position:absolute;left:0;right:0;top:100%;transition:transform .55s var(--ease2)}
+:is(.btn,.tab,.chip,nav a):hover .bt>span,:is(.btn,.tab,.chip,nav a):hover .bt::after{transform:translateY(-100%)}
+.rip{position:absolute;border-radius:50%;background:rgba(255,255,255,.35);transform:scale(0);pointer-events:none;z-index:0;animation:rip .75s var(--ease) forwards}
+@keyframes rip{to{transform:scale(1);opacity:0}}
+
+/* --- boutons principaux : remplissage circulaire depuis le curseur --- */
+.btn{position:relative;overflow:hidden;isolation:isolate;font:500 .74rem var(--sans);letter-spacing:.24em;padding:16px 34px;
+  background:linear-gradient(135deg,var(--violet),#7a3fc0);transition:color .45s var(--ease),border-color .45s,box-shadow .45s var(--ease),transform .3s}
+.btn::before{content:"";position:absolute;left:var(--x,50%);top:var(--y,50%);width:250%;aspect-ratio:1;border-radius:50%;
+  background:var(--ivory);transform:translate(-50%,-50%) scale(0);transition:transform .7s var(--ease);z-index:-1}
+.btn::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.28) 50%,transparent 70%);transform:translateX(-120%);transition:transform 1s var(--ease)}
+.btn:hover{color:var(--violet);border-color:var(--ivory);box-shadow:0 18px 40px -12px rgba(167,123,220,.6)}
+.btn:hover::before{transform:translate(-50%,-50%) scale(1)}
+.btn:not(:hover)::after{animation:shine 5s 2s infinite}
+@keyframes shine{0%,82%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:transparent}
+.btn.ghost::before{background:var(--green)}
+.btn.ghost::after{display:none}
+.btn.ghost:hover{color:var(--night);background:transparent;border-color:var(--green)}
+
+/* --- onglets, puces de recherche --- */
+.tab,.chip{position:relative;overflow:hidden;isolation:isolate;font:400 .72rem var(--sans);letter-spacing:.18em;text-transform:uppercase;transition:color .4s var(--ease),border-color .4s}
+.tab::before,.chip::before{content:"";position:absolute;left:var(--x,50%);top:var(--y,50%);width:260%;aspect-ratio:1;border-radius:50%;background:var(--green);
+  transform:translate(-50%,-50%) scale(0);transition:transform .6s var(--ease);z-index:-1;opacity:.18}
+.tab:hover::before,.chip:hover::before{transform:translate(-50%,-50%) scale(1)}
+.tab.on::before,.chip.on::before{transform:translate(-50%,-50%) scale(1);opacity:1}
+.tab.on,.chip.on{background:transparent;color:var(--night);border-color:var(--green)}
+.tab:hover{color:var(--ivory)}
+.tab.on:hover,.chip.on:hover{color:var(--night)}
+
+/* --- navigation : soulignement qui se dessine depuis le centre --- */
+nav a{border-bottom:0;position:relative;font-family:var(--sans);font-weight:400}
+nav a:not(.pill)::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:1px;background:var(--green);transform:scaleX(0);transition:transform .5s var(--ease)}
+nav a:not(.pill):hover::after,nav a.on::after{transform:scaleX(1)}
+nav a.pill{overflow:hidden;isolation:isolate;transition:color .45s var(--ease)}
+nav a.pill::before{content:"";position:absolute;inset:0;background:var(--green);transform:translateY(101%);transition:transform .5s var(--ease2);z-index:-1}
+nav a.pill:hover{background:transparent;color:var(--night)}
+nav a.pill:hover::before{transform:none}
+
+/* --- recherche --- */
+.search{max-width:680px;margin:0 auto 26px;display:grid;gap:16px}
+.sbox{display:flex;align-items:center;gap:12px;padding:0 18px;border:1px solid var(--line);background:rgba(255,255,255,.035);
+  transition:border-color .4s,box-shadow .5s var(--ease),background .4s;cursor:text}
+.sbox:focus-within{border-color:var(--green);background:rgba(255,255,255,.06);box-shadow:0 0 0 4px rgba(141,184,96,.12),0 20px 50px -20px rgba(141,184,96,.35)}
+.sbox svg{width:20px;height:20px;flex:none;fill:none;stroke:var(--green-l);stroke-width:1.5;transition:transform .5s var(--ease)}
+.sbox:focus-within svg{transform:rotate(-12deg) scale(1.1)}
+.sbox input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--ivory);font:300 1.05rem var(--sans);padding:16px 0}
+.sbox input::placeholder{color:var(--muted);opacity:.7}
+.sbox input::-webkit-search-cancel-button{display:none}
+.qcount{font:italic .95rem var(--serif);color:var(--green-l);white-space:nowrap}
+.qclear{width:30px;height:30px;border:1px solid var(--line);background:none;color:var(--ivory);border-radius:50%;cursor:pointer;font-size:1.1rem;line-height:1;transition:transform .4s var(--ease),border-color .3s}
+.qclear:hover{transform:rotate(90deg);border-color:var(--green)}
+.sbox.small{max-width:420px;margin:18px auto 0}
+.sbox.small input{padding:11px 0;font-size:.95rem}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.chip{padding:7px 16px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;border-radius:999px}
+.noresult{text-align:center;color:var(--muted);font:italic 1.1rem var(--serif);padding:30px 0}
+
+/* --- cartes parfums : zoom, voile doré, bouton « ajouter » --- */
+.flavor{position:relative;border:1px solid var(--line);background:rgba(255,255,255,.03);transition:transform .6s var(--ease),border-color .4s,box-shadow .6s var(--ease)}
+.flavor .fimg{overflow:hidden;position:relative}
+.flavor .fimg::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,240,220,.35) 50%,transparent 65%);transform:translateX(-100%);transition:transform .9s var(--ease)}
+.flavor:hover{transform:translateY(-6px);border-color:var(--green);box-shadow:0 26px 50px -24px rgba(0,0,0,.8)}
+.flavor:hover .fimg::after{transform:translateX(100%)}
+.flavor:hover img{transform:scale(1.08)}
+.flavor strong{font:400 1.05rem/1.3 var(--serif);display:block}
+.flavor small{font-size:.78rem;letter-spacing:.06em}
+.flavor.pop{animation:popin .6s var(--ease) backwards;animation-delay:var(--d,0ms)}
+@keyframes popin{from{opacity:0;transform:translateY(18px) scale(.97)}}
+.add{position:absolute;top:10px;right:10px;width:40px;height:40px;border-radius:50%;border:1px solid rgba(244,239,227,.6);background:rgba(21,8,41,.55);
+  backdrop-filter:blur(6px);color:var(--ivory);font-size:1.3rem;cursor:pointer;display:grid;place-items:center;overflow:hidden;isolation:isolate;
+  opacity:0;transform:scale(.6) rotate(-90deg);transition:opacity .4s,transform .5s var(--ease),color .3s,border-color .3s}
+.add::before{content:"";position:absolute;inset:0;background:var(--green);border-radius:50%;transform:scale(0);transition:transform .45s var(--ease);z-index:-1}
+.add span{transition:transform .5s var(--ease)}
+.flavor:hover .add,.add:focus-visible{opacity:1;transform:none}
+.add:hover{color:var(--night);border-color:var(--green)}
+.add:hover::before{transform:scale(1)}
+.add:hover span{transform:rotate(90deg)}
+.add.ok{animation:okpulse .7s var(--ease)}
+.add.no{animation:shake .45s}
+@keyframes okpulse{40%{transform:scale(1.25)}100%{transform:none}}
+@keyframes shake{25%{transform:translateX(-4px)}50%{transform:translateX(4px)}75%{transform:translateX(-2px)}}
+@media (hover:none){.add{opacity:1;transform:none}}
+
+/* --- composeur --- */
+.qty button{position:relative;overflow:hidden;isolation:isolate;border-radius:50%;transition:color .3s,transform .3s var(--ease),border-color .3s}
+.qty button::before{content:"";position:absolute;inset:0;border-radius:50%;background:var(--green);transform:scale(0);transition:transform .4s var(--ease);z-index:-1}
+.qty button:hover:not(:disabled){background:transparent;color:var(--night);transform:scale(1.1)}
+.qty button:hover:not(:disabled)::before{transform:scale(1)}
+.qty button:active:not(:disabled){transform:scale(.88)}
+.qty output{min-width:1.4em;text-align:center;font:500 1rem var(--sans)}
+.bump{display:inline-block;animation:bump .45s var(--ease)}
+@keyframes bump{40%{transform:scale(1.5);color:var(--green-l)}}
+.item{transition:border-color .4s,background .4s}
+.item.has{border-color:var(--green);background:rgba(141,184,96,.08)}
+#bar{transition:width .6s var(--ease);box-shadow:0 0 18px rgba(141,184,96,.6)}
+
+/* --- FAQ, retour en haut, notification --- */
+.faq summary{transition:color .3s,padding .4s var(--ease)}
+.faq summary:hover{color:var(--green-l);padding-left:8px}
+.faq summary::after{transition:transform .45s var(--ease)}
+.faq details[open] summary::after{content:"+";transform:rotate(135deg)}
+.faq p{overflow:hidden}
+#toTop{overflow:hidden;isolation:isolate;border-radius:50%;transition:opacity .3s,transform .4s var(--ease),color .3s}
+#toTop::before{content:"";position:absolute;inset:0;background:var(--green);transform:translateY(101%);transition:transform .45s var(--ease2);z-index:-1}
+#toTop:hover{color:var(--night);transform:translateY(-4px)}
+#toTop:hover::before{transform:none}
+#toTop span{transition:transform .45s var(--ease)}
+#toTop:hover span{animation:upup .6s var(--ease)}
+@keyframes upup{50%{transform:translateY(-140%)}51%{transform:translateY(140%)}100%{transform:none}}
+.toast{position:fixed;left:50%;bottom:calc(26px + env(safe-area-inset-bottom, 0px));z-index:60;transform:translate(-50%,30px);opacity:0;pointer-events:none;
+  padding:13px 22px;background:rgba(31,13,61,.92);backdrop-filter:blur(10px);border:1px solid var(--green);color:var(--ivory);font:400 .9rem var(--sans);
+  letter-spacing:.04em;transition:opacity .4s,transform .5s var(--ease);white-space:nowrap}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.ph figcaption{font-family:var(--serif)}
+@media (prefers-reduced-motion:reduce){.btn::after,.flavor.pop,.bump{animation:none!important}}

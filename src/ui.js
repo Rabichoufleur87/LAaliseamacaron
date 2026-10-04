@@ -44,6 +44,13 @@ const FLAVORS = [
   ["vanille", "Vanille", "sucré"]
 ].map(([slug, name, type]) => ({ slug, name, type, img: `img/macarons/${slug}.webp`, price: type === "salé" ? SAVORY : SWEET }));
 const SIZES = [8, 12, 18, 24];
+// familles de goûts pour la recherche (« fruit », « fromage »…) en plus du nom
+const FAMILIES = {
+  chocolat: /chocolat|cookie|tiramisu|banane/, fruits: /abricot|cassis|citron|fraise|framboise|mangue|myrtille|passion|banane|figue|coco|rose/,
+  "fruits secs": /amande|noisette|noix|cajou|pistache|praline|cacahuete|sesame/, fromages: /chevre|roquefort|parmesan/,
+  "apéritif": /avocat|chevre|chorizo|foie|cajou|olive|parmesan|roquefort|sesame|truite/, gourmand: /caramel|cookie|pop-corn|tiramisu|praline|vanille|cafe/,
+};
+const norm = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
 export function initUI() {
   $("#sizes").innerHTML = SIZES.map(n => `
@@ -52,15 +59,44 @@ export function initUI() {
     <a class="btn mag" href="#composer" data-size="${n}">Composer</a></article>`).join("")
     + `<article class="card rv"><div class="big">1–6</div><h3>sachet</h3><p class="price">${eur(SWEET)} / pièce</p><a class="btn mag" href="#composer" data-size="6">Composer</a></article>`;
 
-  const renderFlavors = f => {
-    $("#flavors").innerHTML = FLAVORS.filter(x => f === "all" || x.type === f).map(x =>
-      `<figure class="flavor"><img src="${x.img}" alt="Macaron ${x.name}" loading="lazy" width="420" height="420"><figcaption><strong>${x.name}</strong><small>${x.type} · ${eur(x.price)}</small></figcaption></figure>`).join("");
-  };
-  renderFlavors("all");
-  document.querySelectorAll(".tab[data-f]").forEach(t => t.onclick = () => {
-    document.querySelectorAll(".tab[data-f]").forEach(o => o.classList.toggle("on", o === t));
-    renderFlavors(t.dataset.f);
+  // --- recherche de parfums : nom, famille de goûts, sucré / salé ---
+  FLAVORS.forEach(f => {
+    const n = norm(f.name + " " + f.slug);
+    f.key = n + " " + Object.keys(FAMILIES).filter(k => FAMILIES[k].test(n)).map(norm).join(" ") + " " + norm(f.type);
   });
+  let typeF = "all", query = "";
+  $("#flavors").innerHTML = FLAVORS.map((x, i) =>
+    `<figure class="flavor" data-i="${i}"><div class="fimg"><img src="${x.img}" alt="Macaron ${x.name}" loading="lazy" width="420" height="420"></div>
+    <figcaption><strong>${x.name}</strong><small>${x.type} · ${eur(x.price)}</small></figcaption>
+    <button class="add" type="button" data-i="${i}" aria-label="Ajouter ${x.name} à ma boîte"><span>+</span></button></figure>`).join("");
+  const cards = [...$("#flavors").children];
+  function filterFlavors() {
+    const words = norm(query).split(/\s+/).filter(Boolean);
+    let shown = 0;
+    cards.forEach(c => {
+      const f = FLAVORS[+c.dataset.i];
+      const ok = (typeF === "all" || f.type === typeF) && words.every(w => f.key.includes(w));
+      if (ok) { c.style.setProperty("--d", Math.min(shown, 12) * 35 + "ms"); shown++; }
+      c.hidden = !ok;
+      c.classList.remove("pop"); if (ok) { void c.offsetWidth; c.classList.add("pop"); }
+    });
+    $("#qcount").textContent = shown ? `${shown} parfum${shown > 1 ? "s" : ""}` : "";
+    $("#noresult").hidden = shown > 0;
+    $("#noq").textContent = query.trim();
+    $("#qclear").hidden = !query;
+  }
+  document.querySelectorAll(".tab[data-f]").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab[data-f]").forEach(o => o.classList.toggle("on", o === t));
+    typeF = t.dataset.f; filterFlavors();
+  }));
+  $("#q").addEventListener("input", e => { query = e.target.value; document.querySelectorAll(".chip").forEach(c => c.classList.toggle("on", norm(c.dataset.q) === norm(query))); filterFlavors(); });
+  $("#qclear").addEventListener("click", () => { $("#q").value = query = ""; document.querySelectorAll(".chip").forEach(c => c.classList.remove("on")); filterFlavors(); $("#q").focus(); });
+  document.querySelectorAll(".chip").forEach(c => c.addEventListener("click", () => {
+    const on = !c.classList.contains("on");
+    document.querySelectorAll(".chip").forEach(o => o.classList.toggle("on", on && o === c));
+    $("#q").value = query = on ? c.dataset.q : ""; filterFlavors();
+  }));
+  filterFlavors();
 
   let max = 12;
   const qty = FLAVORS.map(() => 0);
@@ -73,6 +109,24 @@ export function initUI() {
     const [m, p] = el.querySelectorAll("button");
     m.onclick = () => { qty[i] = Math.max(0, qty[i] - 1); render(); };
     p.onclick = () => { if (sum() < max) qty[i]++; render(); };
+  });
+  // ajouter un parfum depuis sa carte, avec un petit message de confirmation
+  let toastT;
+  const toast = msg => {
+    const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 2200);
+  };
+  $("#flavors").addEventListener("click", e => {
+    const b = e.target.closest(".add"); if (!b) return;
+    const i = +b.dataset.i, f = FLAVORS[i];
+    if (sum() >= max) { toast(`Votre boîte de ${max} est pleine`); b.classList.add("no"); setTimeout(() => b.classList.remove("no"), 500); return; }
+    qty[i]++; render();
+    b.classList.add("ok"); setTimeout(() => b.classList.remove("ok"), 700);
+    toast(`${f.name} ajouté · ${sum()}/${max}`);
+  });
+  $("#bq").addEventListener("input", e => {
+    const w = norm(e.target.value).split(/\s+/).filter(Boolean);
+    [...$("#builder").children].forEach((el, i) => { el.hidden = !w.every(x => FLAVORS[i].key.includes(x)); });
   });
   const setSize = n => {
     max = n;
@@ -89,12 +143,13 @@ export function initUI() {
     FLAVORS.forEach((f, i) => {
       total += qty[i] * f.price;
       if (qty[i]) parts.push(qty[i] + " × " + f.name);
-      const el = $("#builder").children[i];
-      el.querySelector("output").textContent = qty[i];
+      const el = $("#builder").children[i], o = el.querySelector("output");
+      if (o.textContent !== String(qty[i])) { o.textContent = qty[i]; o.classList.remove("bump"); void o.offsetWidth; o.classList.add("bump"); }
+      el.classList.toggle("has", qty[i] > 0);
       el.querySelectorAll("button")[0].disabled = !qty[i];
       el.querySelectorAll("button")[1].disabled = full;
     });
-    $("#count").textContent = n;
+    if ($("#count").textContent !== String(n)) { const c = $("#count"); c.textContent = n; c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump"); }
     $("#max").textContent = max;
     $("#left").textContent = full ? "boîte pleine ✔" : `encore ${max - n} à choisir`;
     $("#bar").style.width = (n / max * 100) + "%";
