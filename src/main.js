@@ -153,10 +153,31 @@ mac.onFrame = () => {
     [bgw, fi, dots].forEach(list => list.forEach((el, i) => el.classList.toggle("on", i === idx)));
   }
 };
-ScrollTrigger.create({ trigger: ".after", start: "top bottom", onToggle: s => { S.active = !s.isActive; $("#stage").style.visibility = s.isActive ? "hidden" : "visible"; } });
+ScrollTrigger.create({ trigger: ".after", start: "top top", onToggle: s => { S.active = !s.isActive; $("#stage").style.visibility = s.isActive ? "hidden" : "visible"; } });
 ScrollTrigger.create({
   trigger: "#parfums", start: "top 60%", end: "bottom 40%",
   onToggle: s => document.body.classList.toggle("in-flavors", s.isActive),
+});
+
+// --- partie claire : en-tête clair, phrase-manifeste, signatures, barre « ma boîte » ---
+ScrollTrigger.create({ trigger: ".after", start: "top 60px", onToggle: s => document.body.classList.toggle("light", s.isActive) });
+ScrollTrigger.create({ trigger: "#composer", start: "top 70%", end: "bottom 30%", onToggle: s => document.body.classList.toggle("in-composer", s.isActive) });
+{
+  const st = $("#statement"), words = split(st);
+  gsap.set(words, { opacity: 0.14 });
+  gsap.to(words, { opacity: 1, stagger: 0.08, ease: "none", scrollTrigger: { trigger: st, start: "top 80%", end: "bottom 45%", scrub: 0.6 } });
+}
+mm.add("(min-width: 861px)", () => {
+  // distance = largeur de la piste au-delà du bord droit de l'écran
+  const track = $("#sigTrack"), dist = () => Math.max(0, track.getBoundingClientRect().left - gsap.getProperty(track, "x") + track.scrollWidth - innerWidth);
+  gsap.to(track, {
+    x: () => -dist(), ease: "none",
+    scrollTrigger: { trigger: "#signatures", start: "top top", end: () => "+=" + dist(), pin: true, scrub: 0.8, invalidateOnRefresh: true },
+  });
+  gsap.to(".sig-head", { opacity: 0, x: -80, ease: "none",
+    scrollTrigger: { trigger: "#signatures", start: "top top", end: () => "+=" + dist() * 0.3, scrub: true, invalidateOnRefresh: true } });
+  gsap.utils.toArray(".sig-card .sig-img img").forEach(img => gsap.fromTo(img, { scale: 1.18 }, { scale: 1, ease: "none",
+    scrollTrigger: { trigger: "#signatures", start: "top top", end: () => "+=" + dist(), scrub: true } }));
 });
 
 // --- révélations de texte ---

@@ -16,7 +16,7 @@
 <div id="progress"></div>
 
 <header class="top">
-  <a class="logo" href="#accueil"><img src="img/logo-clair.webp" alt="La Valise à Macarons" width="600" height="120"></a>
+  <a class="logo" href="#accueil"><img class="lg-d" src="img/logo-clair.webp" alt="La Valise à Macarons" width="600" height="120"><img class="lg-l" src="img/logo-violet.webp" alt="" width="600" height="120"></a>
   <button class="burger" id="burger" aria-label="Menu" aria-expanded="false">☰</button>
   <nav id="nav">
     <a href="#parfums">Les parfums</a>
@@ -100,6 +100,22 @@
     <div class="mq" id="mq1"><span>Sucré · Salé · Fait main · Limoges · Sur mesure · Sucré · Salé · Fait main · Limoges · Sur mesure ·</span></div>
     <div class="mq outline" id="mq2"><span>La Valise à Macarons · Place de la Motte · La Valise à Macarons · Place de la Motte ·</span></div>
   </div>
+
+  <section id="univers" class="univers">
+    <p class="kick rv">L'univers</p>
+    <p class="statement" id="statement">Chaque macaron est un petit voyage. <em>38 parfums</em>, de la rose au foie gras, du citron vert au chocolat d'origine, imaginés et façonnés à la main, <em>place de la Motte</em>, depuis 2013.</p>
+  </section>
+
+  <section id="signatures" class="sig">
+    <div class="sig-in">
+      <div class="sig-head">
+        <p class="kick">Nos signatures</p>
+        <h2 class="sig-title">Les incontournables<br><em>de la maison.</em></h2>
+        <p class="sig-note">Faites défiler pour les découvrir, puis ajoutez-les à votre boîte.</p>
+      </div>
+      <div class="sig-track" id="sigTrack"></div>
+    </div>
+  </section>
 
   <section id="comment">
     <h2 class="rv" data-split>Comment ça marche</h2>
@@ -222,6 +238,11 @@
 </main>
 <a href="#accueil" id="toTop" aria-label="Haut de page"><span>↑</span></a>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<a class="orderbar" id="orderbar" href="#composer" aria-live="polite">
+  <span class="ob-box"><span class="ob-dots" id="obDots"></span></span>
+  <span class="ob-txt"><b>Ma boîte</b> <span id="obCount">0/12</span> · <span id="obTotal">0,00 €</span></span>
+  <span class="ob-go">Finaliser <i>→</i></span>
+</a>
 <script src="site.min.js"></script>
 </body>
 </html>

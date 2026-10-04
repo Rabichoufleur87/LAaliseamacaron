@@ -59,6 +59,25 @@ export function initUI() {
     <a class="btn mag" href="#composer" data-size="${n}">Composer</a></article>`).join("")
     + `<article class="card rv"><div class="big">1–6</div><h3>sachet</h3><p class="price">${eur(SWEET)} / pièce</p><a class="btn mag" href="#composer" data-size="6">Composer</a></article>`;
 
+  // --- signatures : les incontournables, chacun avec une phrase d'ambiance ---
+  const SIG = [
+    ["caramel-beurre-sale", "Fondant, une pointe de sel, l'âme bretonne."],
+    ["pistache", "Une pistache intense, verte comme notre maison."],
+    ["framboise", "Vive, acidulée, cueillie au cœur de l'été."],
+    ["chocolat-origine-vietnam", "Un grand cru aux notes boisées et fruitées."],
+    ["fruit-de-la-passion", "Un éclat exotique, tout en fraîcheur."],
+    ["rose", "Délicate et florale, l'élégance à la française."],
+    ["foie-gras-et-figues", "Le salé de fête, pour un apéritif d'exception."],
+    ["cafe", "Corsé et doux, le compagnon du café gourmand."],
+  ];
+  $("#sigTrack").innerHTML = SIG.map(([slug, line], n) => {
+    const i = FLAVORS.findIndex(f => f.slug === slug), f = FLAVORS[i];
+    return `<article class="sig-card"><span class="sig-n">N°${String(n + 1).padStart(2, "0")}</span>
+      <div class="sig-img"><img src="${f.img}" alt="Macaron ${f.name}" loading="lazy" width="420" height="420"></div>
+      <h3>${f.name}</h3><p>${line}</p>
+      <div class="sig-foot"><span class="sig-price">${eur(f.price)}</span><button class="btn small" type="button" data-addi="${i}">Ajouter</button></div></article>`;
+  }).join("");
+
   // --- recherche de parfums : nom, famille de goûts, sucré / salé ---
   FLAVORS.forEach(f => {
     const n = norm(f.name + " " + f.slug);
@@ -116,9 +135,9 @@ export function initUI() {
     const t = $("#toast"); t.textContent = msg; t.classList.add("show");
     clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 2200);
   };
-  $("#flavors").addEventListener("click", e => {
-    const b = e.target.closest(".add"); if (!b) return;
-    const i = +b.dataset.i, f = FLAVORS[i];
+  document.addEventListener("click", e => {
+    const b = e.target.closest(".add, [data-addi]"); if (!b) return;
+    const i = +(b.dataset.i ?? b.dataset.addi), f = FLAVORS[i];
     if (sum() >= max) { toast(`Votre boîte de ${max} est pleine`); b.classList.add("no"); setTimeout(() => b.classList.remove("no"), 500); return; }
     qty[i]++; render();
     b.classList.add("ok"); setTimeout(() => b.classList.remove("ok"), 700);
@@ -155,6 +174,12 @@ export function initUI() {
     $("#bar").style.width = (n / max * 100) + "%";
     $("#total").textContent = eur(total);
     $("#summary").textContent = parts.join(", ") || "Ajoutez des macarons avec les boutons +";
+    // barre « ma boîte » flottante
+    $("#orderbar").classList.toggle("has", n > 0);
+    document.body.classList.toggle("hasbox", n > 0);
+    $("#obCount").textContent = `${n}/${max}`;
+    $("#obTotal").textContent = eur(total);
+    $("#obDots").innerHTML = FLAVORS.flatMap((f, i) => Array(qty[i]).fill(`<img src="${f.img}" alt="">`)).slice(0, 4).join("");
   }
   render();
 
